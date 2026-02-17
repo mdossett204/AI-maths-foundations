@@ -4,4 +4,4 @@ torchvision
 matplotlib
 Pillow
 tqdm
-
+tensorboard
