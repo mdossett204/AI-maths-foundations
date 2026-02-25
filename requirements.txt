@@ -5,3 +5,5 @@ matplotlib
 Pillow
 tqdm
 tensorboard
+transformers
+datasets
