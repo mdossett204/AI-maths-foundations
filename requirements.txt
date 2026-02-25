@@ -7,3 +7,4 @@ tqdm
 tensorboard
 transformers
 datasets
+python-dotenv
