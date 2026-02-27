@@ -10,7 +10,7 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 
 - **Goal:** Establish a strong baseline. Understand how to turn text into numbers and the mechanics of classification (Weights & Gradients).
 - **Daily Plan:**
-  - **Day 1 (Vectorization):** Loading **IMDB**. Bag of Words vs. TF-IDF (`CountVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
+  - **Day 1 (Vectorization):** Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TFIDFVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
   - **Day 2 (Binary Classification):** The "Black Box" (Sklearn Logistic Regression) vs. The "White Box" (PyTorch `nn.Linear` + Sigmoid).
   - **Day 3 (Training Loops):** Implementing the training loop manually (Forward pass, Loss, Backward pass) for the IMDB sentiment model.
   - **Day 4 (Multi-class Data):** Loading **20 Newsgroups**. Handling non-binary labels.
