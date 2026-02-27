@@ -1,0 +1,9 @@
+scikit-learn
+matplotlib
+seaborn
+torch
+tqdm
+ipywidgets
+pandas
+datasets
+python-dotenv

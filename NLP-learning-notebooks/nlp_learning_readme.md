@@ -8,16 +8,19 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 
 #### **Week 1: Classical Machine Learning for Text**
 
-- **Goal:** Establish a strong baseline. Understand how to turn text into numbers without neural networks.
-- **Key Concepts:**
-  - Vectorization: `CountVectorizer` vs. `TfidfVectorizer`.
-  - **Binary Classification:** Logistic Regression on sentiment data.
-  - **Multi-class Classification:** Handling 20+ distinct topics with Naive Bayes/SVM.
+- **Goal:** Establish a strong baseline. Understand how to turn text into numbers and the mechanics of classification (Weights & Gradients).
+- **Daily Plan:**
+  - **Day 1 (Vectorization):** Loading **IMDB**. Bag of Words vs. TF-IDF (`CountVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
+  - **Day 2 (Binary Classification):** The "Black Box" (Sklearn Logistic Regression) vs. The "White Box" (PyTorch `nn.Linear` + Sigmoid).
+  - **Day 3 (Training Loops):** Implementing the training loop manually (Forward pass, Loss, Backward pass) for the IMDB sentiment model.
+  - **Day 4 (Multi-class Data):** Loading **20 Newsgroups**. Handling non-binary labels.
+  - **Day 5 (Multi-class Model):** Softmax Regression in PyTorch vs. Naive Bayes in Sklearn.
+  - **Day 6-7:** Digest and Blog.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews (Binary Sentiment).
   - **Demo:** **20 Newsgroups** (Multi-class Topic Classification: Sports, Tech, Politics, etc.).
 - **Data Source:** Hugging Face `datasets.load_dataset("imdb")`, `sklearn.datasets.fetch_20newsgroups()`.
-- **Tech Stack:** `scikit-learn`, `pandas`.
+- **Tech Stack:** `scikit-learn`, `pandas`, `datasets`, `torch`.
 
 #### **Week 2: The Mechanics of Meaning (Tokenization)**
 
