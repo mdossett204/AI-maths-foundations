@@ -1,11 +1,12 @@
 from typing import Tuple
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from sklearn.metrics import accuracy_score
 import scipy.sparse
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from datasets import load_dataset
-
 
 
 def get_imdb_ds(seed: int, train_size: int, val_size: int, test_size: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -119,3 +120,63 @@ def load_sklearn_features(base_filename='imdb_sklearn'):
     
     return X_train, labels['y_train'], X_val, labels['y_val'], X_test, labels['y_test']
 
+
+def plot_training_history(train_losses, val_losses, train_accs, val_accs):
+    """
+    Plots loss and accuracy curves.
+    """
+    epochs = range(1, len(train_losses) + 1)
+    
+    plt.figure(figsize=(12, 5))
+    
+    # Loss Plot
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_losses, 'b-', label='Training Loss')
+    plt.plot(epochs, val_losses, 'r-', label='Validation Loss')
+    plt.title('Training & Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    
+    # Accuracy Plot
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, train_accs, 'b-', label='Training Acc')
+    plt.plot(epochs, val_accs, 'r-', label='Validation Acc')
+    plt.title('Training & Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    
+    plt.show()
+
+def tune_sklearn_model(model, param_name, param_values, X_train, y_train, X_val, y_val):
+    """
+    Generic function to tune a single hyperparameter for any Sklearn model.
+    """
+    best_acc = 0
+    best_param = None
+    best_model = None
+    
+    print(f"--- Tuning {model.__class__.__name__} ({param_name}) ---")
+    
+    for value in param_values:
+        # Set the parameter dynamically
+        params = {param_name: value}
+        model.set_params(**params)
+        
+        # Train
+        model.fit(X_train, y_train)
+        
+        # Evaluate
+        val_pred = model.predict(X_val)
+        acc = accuracy_score(y_val, val_pred)
+        
+        print(f"{param_name}={value}: Val Acc = {acc:.4f}")
+        
+        if acc > best_acc:
+            best_acc = acc
+            best_param = value
+            # We don't deepcopy here to save memory, but in production you might want to
+            
+    print(f"🏆 Best {param_name}: {best_param} (Acc: {best_acc:.4f})\n")
+    return best_param, best_acc
