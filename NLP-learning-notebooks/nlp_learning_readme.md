@@ -12,8 +12,7 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 - **Daily Plan:**
   - **Day 1 (Vectorization):** Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TFIDFVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
   - **Day 2 & 3 (Binary Classification & Training):** The "Black Box" (Sklearn) vs. The "White Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, SVM, and Simple NN.
-  - **Day 4 (Multi-class Data):** Loading **20 Newsgroups**. Handling non-binary labels.
-  - **Day 5 (Multi-class Model):** Softmax Regression in PyTorch vs. Naive Bayes in Sklearn.
+  - **Day 4-5 (Multi-class Classification):** Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression (PyTorch).
   - **Day 6-7:** Digest and Blog.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews (Binary Sentiment).

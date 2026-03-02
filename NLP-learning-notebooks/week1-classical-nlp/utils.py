@@ -7,6 +7,8 @@ import scipy.sparse
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from datasets import load_dataset
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.model_selection import train_test_split
 
 
 def get_imdb_ds(seed: int, train_size: int, val_size: int, test_size: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -26,6 +28,25 @@ def get_imdb_ds(seed: int, train_size: int, val_size: int, test_size: int) -> Tu
     test_subset = imdb_ds["test"].shuffle(seed=seed).select(range(test_size))
     
     return pd.DataFrame(train_subset), pd.DataFrame(val_subset), pd.DataFrame(test_subset)
+
+def get_newsgroups_ds(remove: Tuple[str] = ('headers', 'footers', 'quotes'), val_size: float = 0.1, seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list]:
+    """
+    Loads the 20 Newsgroups dataset.
+    Splits the original 'train' set into 'train' and 'validation'.
+    Returns Train DF, Val DF, Test DF, and the list of class names.
+    """
+    # Fetch data
+    newsgroups_train_full = fetch_20newsgroups(subset='train', remove=remove)
+    newsgroups_test = fetch_20newsgroups(subset='test', remove=remove)
+
+    # Create DataFrames
+    full_train_df = pd.DataFrame({'text': newsgroups_train_full.data, 'label': newsgroups_train_full.target})
+    test_df = pd.DataFrame({'text': newsgroups_test.data, 'label': newsgroups_test.target})
+    
+    # Split Train into Train/Val
+    train_df, val_df = train_test_split(full_train_df, test_size=val_size, random_state=seed, stratify=full_train_df['label'])
+    
+    return train_df, val_df, test_df, newsgroups_train_full.target_names
 
 def create_dataloaders(
     X_train: torch.Tensor, 
