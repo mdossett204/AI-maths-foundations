@@ -1,4 +1,5 @@
 from typing import Tuple
+import gc
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -201,3 +202,22 @@ def tune_sklearn_model(model, param_name, param_values, X_train, y_train, X_val,
             
     print(f"🏆 Best {param_name}: {best_param} (Acc: {best_acc:.4f})\n")
     return best_param, best_acc
+
+def clean_memory(vars_to_delete: list = None, scope: dict = None, verbose: bool = True):
+    """
+    Cleans memory. To delete variables, pass a list of names and globals().
+    Example: utils.clean_memory(['model', 'X_train'], globals())
+    """
+    if vars_to_delete and scope:
+        for var in vars_to_delete:
+            if var in scope:
+                del scope[var]
+    
+    gc.collect()
+    
+    if torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    if verbose:
+        print("Memory cleaned.")
