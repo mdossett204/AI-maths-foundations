@@ -1,4 +1,5 @@
-from typing import Tuple
+from typing import Dict, Tuple
+from copy import deepcopy
 import gc
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -6,6 +7,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 import scipy.sparse
 import torch
+from torch import nn
 from torch.utils.data import TensorDataset, DataLoader
 from datasets import load_dataset
 from sklearn.datasets import fetch_20newsgroups
@@ -221,3 +223,117 @@ def clean_memory(vars_to_delete: list = None, scope: dict = None, verbose: bool 
         torch.cuda.empty_cache()
     if verbose:
         print("Memory cleaned.")
+
+def get_device() -> torch.device:
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+def check_early_stop(
+        patience:int, 
+        val_loss:float, 
+        model:nn.Module, 
+        best_model_state: Dict, 
+        lowest_loss:float, 
+        counter: int) -> Tuple:
+    early_stop = False
+    if val_loss < lowest_loss:
+        lowest_loss = val_loss
+        best_model_state = deepcopy(model.state_dict())
+        counter = 0 
+    else:
+        counter += 1
+
+    if counter >= patience:
+        early_stop = True
+    return best_model_state, lowest_loss, counter, early_stop
+
+def get_correct_predictions(logits: torch.tensor, y:torch.tensor, is_binary:bool=False)-> float:
+    if is_binary:
+        probs = torch.sigmoid(logits)
+        preds = (probs > 0.5).float()
+    else:
+        preds = torch.argmax(logits, dim=1)
+    return (preds == y).float().sum().item()
+
+def evaluate_model(
+        model: nn.Module, 
+        data_loader:DataLoader, 
+        criterion: nn.Module, 
+        device: torch.device,
+        is_binary:bool=False) -> Tuple:
+    total_size = len(data_loader.dataset)
+    if total_size == 0: return 0.0, 0.0
+    model.eval()
+    avg_loss = 0 
+    accuracy = 0 
+    # eval disables dropout/batchnorm behavior; no_grad saves memory and skips gradient computation
+    with torch.no_grad():
+        for x, y in data_loader:
+            x, y = x.to(device), y.to(device)
+            logit = model(x)
+            loss = criterion(logit, y)
+            avg_loss += loss.item()
+            accuracy += get_correct_predictions(logit, y, is_binary)
+    avg_loss/=len(data_loader)
+    accuracy/=total_size
+    return avg_loss, accuracy
+
+
+def train_test_model(
+        device: torch.device, 
+        model: nn.Module, 
+        criterion:nn.Module,
+        train_loader:DataLoader, 
+        val_loader:DataLoader, 
+        patience:int, 
+        num_epochs:int, 
+        lr:float, 
+        l2:float,
+        is_binary:bool=False) -> nn.Module:
+    model.to(device)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=l2)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5) 
+    best_model_state = deepcopy(model.state_dict())
+    lowest_loss = float("inf")
+    counter = 0 
+    total_train_size = len(train_loader.dataset)
+    train_losses = []
+    train_accs = []
+    val_losses = []
+    val_accs = []
+    for epoch in range(num_epochs):
+        model.train()
+        avg_train_loss = 0 
+        train_accuracy = 0
+        for x, y in train_loader:
+            x, y = x.to(device), y.to(device)
+            optimizer.zero_grad()
+            logit = model(x)
+            loss = criterion(logit, y)
+            loss.backward()
+            optimizer.step()
+            avg_train_loss += loss.item()
+            train_accuracy += get_correct_predictions(logit, y, is_binary)
+        avg_train_loss /= len(train_loader)
+        train_accuracy /= total_train_size
+        train_losses.append(avg_train_loss)
+        train_accs.append(train_accuracy)
+        avg_val_loss, val_accuracy = evaluate_model(model, val_loader, criterion, device, is_binary)
+        val_losses.append(avg_val_loss)
+        val_accs.append(val_accuracy)
+        lr_scheduler.step(avg_val_loss)
+        best_model_state, lowest_loss, counter, early_stop = check_early_stop(
+            patience, avg_val_loss, model, best_model_state, lowest_loss, counter)
+        if epoch % 10 == 0: 
+            print(f"Epoch number {epoch} train_loss: {avg_train_loss:.4f} and val_loss: {avg_val_loss:.4f}")
+            print(f"Epoch number {epoch} train_accuracy: {train_accuracy:.4f} and val_accuracy: {val_accuracy:.4f}")
+        if early_stop:
+            print(f"Early stopping at epoch number {epoch}")
+            print(f"Train_loss: {avg_train_loss:.4f} and val_loss: {avg_val_loss:.4f}")
+            break
+    plot_training_history(train_losses, val_losses, train_accs, val_accs)
+    model.load_state_dict(best_model_state)
+    return model 
