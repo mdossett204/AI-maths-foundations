@@ -1,3 +1,4 @@
+import re
 import statistics
 from typing import List
 from datasets import load_dataset
@@ -36,11 +37,12 @@ def corpus_token_lengths(texts, tokenize_fn):
     }
 
 
-def word_tokenizer(text: str, delimiter:str=" ") -> List[str]:
+def word_tokenizer(text: str) -> List[str]:
     """
-    split the input text by word boundary, assume delimiter is just white space as default value.
+    Split input text into words and punctuation tokens.
+    Example: "don't stop!" -> ["don", "'", "t", "stop", "!"]
     """
-    return text.split(sep=delimiter)
+    return re.findall(r"\w+|[^\w\s]", text, flags=re.UNICODE)
 
 def character_tokenizer(text:str) -> List[str]:
     """
