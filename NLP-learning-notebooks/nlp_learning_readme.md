@@ -23,6 +23,10 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 #### **Week 2: The Mechanics of Meaning (Tokenization)**
 
 - **Goal:** Open the "black box" of tokenization.
+- **Daily Plan:**
+  - **Day 1 (Concepts):** Key concepts (Word, Char, Subword, Byte-level). Compare and contrast. Special tokens and multilingual issues.
+  - **Day 2 (From Scratch):** Implementation of WordPiece and BPE algorithms **from scratch**.
+  - **Day 3 (Modern Usage):** Tying it back to LLMs and modern usage. Integration with Hugging Face `tokenizers`.
 - **Key Concepts:**
   - **The OOV Problem:** Why word-level splitting fails on complex languages.
   - **Byte-Level BPE:** How to handle any language (Chinese, Emoji) using bytes.
