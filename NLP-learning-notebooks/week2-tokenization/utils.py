@@ -51,7 +51,19 @@ def character_tokenizer(text:str) -> List[str]:
     """
     return list(text)
 
-def train_bpe(corpus: List[str], vocab_size: int = 200, min_freq: int = 2) -> List[Tuple[str, str]]:
+def byte_level_tokenizer(text: str) -> List[str]:
+    """
+    Return a list of UTF-8 bytes (0-255) representing the input text.
+    This is the simplest byte-level tokenizer (no merges).
+    """
+    return list(text.encode("utf-8"))
+
+def train_bpe(
+    corpus: List[str],
+    vocab_size: int = 200,
+    min_freq: int = 2,
+    byte_level: bool = False,
+) -> List[Tuple[str, str]]:
     """
     Train a basic BPE merge list on a word-level corpus.
     Returns a list of merges (pair tuples) in order.
@@ -59,9 +71,16 @@ def train_bpe(corpus: List[str], vocab_size: int = 200, min_freq: int = 2) -> Li
     vocab = Counter()
     for text in corpus:
         for word in word_tokenizer(text):
-            if word.strip():
-                vocab[" ".join(character_tokenizer(word)) + " </w>"] += 1
+            if not word.strip():
+                continue
+            if byte_level:
+                # Use byte-level symbols for each word
+                symbols = [str(b) for b in byte_level_tokenizer(word)]
+            else:
+                symbols = character_tokenizer(word)
+            vocab[" ".join(symbols) + " </w>"] += 1
 
+    initial_vocab_size = len({tok for w in vocab for tok in w.split()})
     merges = []
     while True:
         pairs = defaultdict(int)
@@ -78,16 +97,31 @@ def train_bpe(corpus: List[str], vocab_size: int = 200, min_freq: int = 2) -> Li
         merges.append(best)
         bigram = " ".join(best)
         replacement = "".join(best)
-        vocab = Counter({w.replace(bigram, replacement): f for w, f in vocab.items()})
 
-        current_vocab_size = len({tok for w in vocab for tok in w.split()})
-        if current_vocab_size >= vocab_size:
+        new_vocab = Counter()
+        for word, freq in vocab.items():
+            symbols = word.split()
+            i = 0 
+            new_symbols = []
+            while i < len(symbols):
+                if i < len(symbols) - 1 and symbols[i] == best[0] and symbols[i+1] == best[1]:
+                    new_symbols.append(replacement)
+                    i += 2
+                else:
+                    new_symbols.append(symbols[i])
+                    i += 1
+            new_vocab[" ".join(new_symbols)] += freq
+        vocab = new_vocab
+        if initial_vocab_size + len(merges) >= vocab_size:
             break
 
     return merges
 
-def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]]) -> List[str]:
-    tokens = list(word) + ["</w>"]
+def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
+    if byte_level:
+        tokens = [str(b) for b in byte_level_tokenizer(word)] + ["</w>"]
+    else:
+        tokens = list(word) + ["</w>"]
     if not merges:
         return [t for t in tokens if t != "</w>"]
 
@@ -105,13 +139,13 @@ def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]]) -> List[str]:
 
     return [t for t in tokens if t != "</w>"]
 
-def bpe_tokenizer(text: str, merges: List[Tuple[str, str]]) -> List[str]:
+def bpe_tokenizer(text: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
     """
     Tokenize text using learned BPE merges (word-level).
     """
     tokens = []
     for word in word_tokenizer(text):
-        tokens.extend(_apply_bpe_to_word(word, merges))
+        tokens.extend(_apply_bpe_to_word(word, merges, byte_level=byte_level))
     return tokens
 
 def train_wordpiece(corpus: List[str], vocab_size: int = 200, min_freq: int = 2) -> List[str]:
@@ -136,43 +170,70 @@ def train_wordpiece(corpus: List[str], vocab_size: int = 200, min_freq: int = 2)
             vocab.add("##" + ch)
 
     splits = {}
-    for word in word_freqs:
-        if not word:
+    for word, freq in word_freqs.items():
+        if freq < min_freq or not word:
             continue
         split = [word[0]] + ["##" + ch for ch in word[1:]]
         splits[word] = split
 
-    def get_pair_scores() -> Dict[Tuple[str, str], float]:
-        pair_freqs = defaultdict(int)
-        token_freqs = defaultdict(int)
-        for word, freq in word_freqs.items():
-            if word not in splits:
-                continue
-            split = splits[word]
-            for tok in split:
-                token_freqs[tok] += freq
-            for i in range(len(split) - 1):
-                pair_freqs[(split[i], split[i + 1])] += freq
-        scores = {}
-        for pair, freq in pair_freqs.items():
-            scores[pair] = freq / (token_freqs[pair[0]] * token_freqs[pair[1]])
-        return scores
+
+    pair_freqs = defaultdict(int)
+    token_freqs = defaultdict(int)
+    for word, freq in word_freqs.items():
+        if word not in splits: 
+            continue
+        split = splits[word]
+        for tok in split: 
+            token_freqs[tok] += freq
+        for i in range(len(split) - 1): 
+            pair_freqs[(split[i], split[i+1])] += freq
+    
+    def score(pair:Tuple[str,str]) -> float:
+        denom = token_freqs[pair[0]] * token_freqs[pair[1]]
+        return pair_freqs[pair]/denom if denom > 0 else 0.0
+    
+    token_to_words = defaultdict(set)
+    for word, split in splits.items():
+        for tok in split: 
+            token_to_words[tok].add(word)
 
     while len(vocab) < vocab_size:
-        scores = get_pair_scores()
-        if not scores:
+        if not pair_freqs: 
+            break 
+
+        best_pair = max(pair_freqs, key=score)
+
+        if pair_freqs[best_pair] == 0: 
             break
-        best_pair = max(scores, key=scores.get)
 
         a, b = best_pair
         merged = (a + b[2:]) if b.startswith("##") else (a + b)
         vocab.add(merged)
 
-        for word, split in splits.items():
-            i = 0
+        affected_words = token_to_words[a] & token_to_words[b] 
+
+        for word in affected_words:
+            split = splits[word]
+            freq = word_freqs[word]
+
+            if not any(split[i] == a and split[i+1] == b for i in range(len(split) - 1)):
+                continue
+
+            for tok in split: 
+                token_freqs[tok] -= freq
+                if token_freqs[tok] <= 0:
+                    del token_freqs[tok]
+
+            for i in range(len(split) - 1):
+                p = (split[i], split[i+1])
+                pair_freqs[p] -= freq
+                if pair_freqs[p] <= 0:
+                    del pair_freqs[p]
+            
             new_split = []
+            i = 0 
             while i < len(split):
-                if i < len(split) - 1 and split[i] == a and split[i + 1] == b:
+                if i < len(split) - 1 and split[i] == a and split[i+1] == b:
                     new_split.append(merged)
                     i += 2
                 else:
@@ -180,6 +241,15 @@ def train_wordpiece(corpus: List[str], vocab_size: int = 200, min_freq: int = 2)
                     i += 1
             splits[word] = new_split
 
+            for tok in new_split:
+                token_freqs[tok] += freq 
+            for i in range(len(new_split) - 1):
+                pair_freqs[(new_split[i], new_split[i+1])] += freq 
+            
+            for tok in split:
+                token_to_words[tok].discard(word)
+            for tok in new_split:
+                token_to_words[tok].add(word)
     return sorted(vocab)
 
 def word_piece_tokenizer(text: str, vocab: List[str], unk_token: str = "[UNK]") -> List[str]:
