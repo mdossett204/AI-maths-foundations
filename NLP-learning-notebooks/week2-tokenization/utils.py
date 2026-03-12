@@ -95,7 +95,6 @@ def train_bpe(
             break
 
         merges.append(best)
-        bigram = " ".join(best)
         replacement = "".join(best)
 
         new_vocab = Counter()
