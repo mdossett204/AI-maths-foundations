@@ -82,7 +82,7 @@ def train_bpe(
 
     initial_vocab_size = len({tok for w in vocab for tok in w.split()})
     merges = []
-    while True:
+    while initial_vocab_size + len(merges) < vocab_size:
         pairs = defaultdict(int)
         for word, freq in vocab.items():
             symbols = word.split()
@@ -111,9 +111,6 @@ def train_bpe(
                     i += 1
             new_vocab[" ".join(new_symbols)] += freq
         vocab = new_vocab
-        if initial_vocab_size + len(merges) >= vocab_size:
-            break
-
     return merges
 
 def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
@@ -135,6 +132,8 @@ def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: boo
                 new_tokens.append(tokens[i])
                 i += 1
         tokens = new_tokens
+        if len(tokens) == 2: # one real token plus </w> 
+            break
 
     return [t for t in tokens if t != "</w>"]
 
