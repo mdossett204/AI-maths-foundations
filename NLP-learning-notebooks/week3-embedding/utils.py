@@ -42,7 +42,7 @@ def save_torch_dataset(input_ids:List[List[int]], labels:List[int],
     )
 
 def load_torch_dataset(file_name:str) -> Tuple:
-    data = torch.load(file_name)
+    data = torch.load(file_name, weights_only=True)
     return data["input_ids"], data["labels"], data["attention_mask"]
 
 
@@ -101,7 +101,7 @@ def character_tokenizer(text:str) -> List[str]:
     """
     return list(text)
 
-def byte_level_tokenizer(text: str) -> List[str]:
+def byte_level_tokenizer(text: str) -> List[int]:
     """
     Return a list of UTF-8 bytes (0-255) representing the input text.
     This is the simplest byte-level tokenizer (no merges).
@@ -313,10 +313,10 @@ def train_test_model(
         patience:int, 
         num_epochs:int, 
         lr:float, 
-        l2:float,
+        weight_decay:float,
         is_binary:bool=False) -> nn.Module:
     model.to(device)
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=l2)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=patience) 
     best_model_state = deepcopy(model.state_dict())
     lowest_loss = float("inf")
@@ -426,7 +426,7 @@ def load_glove_txt(path:str, dim:int) -> Dict:
     return word_to_vec
 
 def get_glove_sent_embed(sentence:str, glove:Dict, dim:int) -> torch.tensor:
-    words = sentence.lower().split()
+    words = word_tokenizer(sentence.lower())
     vecs = [glove[w] for w in words if w in glove]
     if not vecs:
         return torch.zeros(dim)
