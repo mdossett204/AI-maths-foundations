@@ -44,6 +44,11 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 #### **Week 3: Vector Space Semantics (Embeddings & MLPs)**
 
 - **Goal:** Transition to dense, semantic vectors.
+- **Focused 4-Day Plan (single notebook):**
+  1. Tokenizer → IDs → padding/masks (use Week 2 tokenizer outputs).
+  2. Train a simple embedding model (DAN: `Embedding → mean pool → MLP → classifier`).
+  3. Briefly compare with pretrained word embeddings (mention SBERT only, defer depth).
+  4. Real‑world usage: similarity search, clustering, retrieval foundations.
 - **Key Concepts:**
   - Embeddings: `King - Man + Woman = Queen`.
   - The `nn.Embedding` layer in PyTorch.
