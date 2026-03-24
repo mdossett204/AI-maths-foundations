@@ -1,15 +1,15 @@
 import re
 import json
 from collections import Counter, defaultdict
-from typing import Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 import textwrap
 import numpy as np
 from copy import deepcopy
 import gc
 import matplotlib.pyplot as plt
 import torch
-import torch.nn.functional as F
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
@@ -436,6 +436,38 @@ def get_sbert_embed(sbert: SentenceTransformer, sentences:List[str]) -> torch.te
     sbert_embed = sbert.encode(sentences, convert_to_tensor=True)
     return sbert_embed 
 
-def cos_sim_matrix(x):
+def cos_sim_matrix(x:torch.Tensor) -> torch.Tensor:
     x = F.normalize(x, dim=1)
     return x @ x.T
+
+def semantic_search(
+        query:str, 
+        docs: List[str],
+        doc_embs:List[torch.Tensor],
+        query_embed_fn: Callable,
+        k:int) -> List[Tuple[str,float]]:
+    q_emb = query_embed_fn(query)
+    sims = F.cosine_similarity(doc_embs, q_emb.unsqueeze(0), dim=1)
+    topk = torch.topk(sims, k=k)
+    return [(docs[i], sims[i].item()) for i in topk.indices.tolist()]
+
+def print_embedding_result(
+        query: str,
+        docs: List[str],
+        doc_embs: torch.Tensor,
+        query_fn: Callable,
+        k: int,
+        model_type:str,
+):
+    semantic_results = semantic_search(
+        query,
+        docs,
+        doc_embs,
+        query_fn,
+        k
+    )
+    print(f"\n {model_type} semantic search:")
+    for text, score in semantic_results:
+        print(f"{score:3f} | {text}")
+    
+  
