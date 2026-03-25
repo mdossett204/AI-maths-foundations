@@ -61,13 +61,24 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 #### **Week 4: Sequence Modeling (RNNs)**
 
 - **Goal:** Treat text as a sequence where order matters.
+- **Daily Plan:**
+  - **Day 1 (Baselines Revisited):** Revisit the Week 3 `DAN` model and compare it with `TF-IDF + Logistic Regression` for IMDb sentiment prediction to define the limitation of order-agnostic models.
+  - **Day 2 (Basic RNN):** Build a simple `RNN` sentiment classifier in PyTorch and understand hidden states over time.
+  - **Day 3 (LSTM & GRU):** Reuse the existing RNN training pipeline and swap in `LSTM` and `GRU`; compare gating mechanisms and explain why memory states help.
+  - **Day 4 (Bidirectionality):** Reuse the sequence model pipeline to add left-to-right and right-to-left processing with `BiLSTM` / `BiGRU` and compare how bidirectional context changes the representation.
+  - **Day 5 (Prediction Challenge Set):** Create a small handwritten prediction set with neutral and order-sensitive sentiment examples to stress test model behavior.
+  - **Day 6 (Compare & Contrast):** Compare all models qualitatively and quantitatively: accuracy, training speed, stability, and failure cases. Digest and Blog.
 - **Key Concepts:**
-  - Recurrence (RNN) vs. Gating (LSTM/GRU).
+  - Why sequence order matters beyond bag-of-words style features.
+  - Order-agnostic baselines: `TF-IDF + Logistic Regression` and `DAN`.
+  - Recurrence (`RNN`) vs. gating (`LSTM` / `GRU`).
+  - Hidden states, memory states, sequence length, and vanishing gradients.
   - Bidirectionality.
+  - Behavioral testing with neutral and order-sensitive challenge inputs.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews.
-  - **Demo:** **Sarcasm Detection** (Headlines dataset) - showing where "Bag of Words" fails.
-- **Data Source:** `datasets.load_dataset("imdb")`, `datasets.load_dataset("sarcasm")`.
+  - **Demo:** IMDb-trained models evaluated on a small custom challenge set containing neutral, order-sensitive, and sarcastic-like review snippets.
+- **Data Source:** `datasets.load_dataset("imdb")`, manual challenge examples.
 - **Tech Stack:** `PyTorch`.
 
 #### **Week 5: Spatial Features in Text (CNNs)**
