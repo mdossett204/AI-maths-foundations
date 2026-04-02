@@ -61,23 +61,26 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 #### **Week 4: Sequence Modeling (RNNs)**
 
 - **Goal:** Treat text as a sequence where order matters.
-- **Daily Plan:**
-  - **Day 1 (Baselines Revisited):** Revisit the Week 3 `DAN` model and compare it with `TF-IDF + Logistic Regression` for IMDb sentiment prediction to define the limitation of order-agnostic models.
-  - **Day 2 (Basic RNN):** Build a simple `RNN` sentiment classifier in PyTorch and understand hidden states over time.
-  - **Day 3 (LSTM & GRU):** Reuse the existing RNN training pipeline and swap in `LSTM` and `GRU`; compare gating mechanisms and explain why memory states help.
-  - **Day 4 (Bidirectionality):** Reuse the sequence model pipeline to add left-to-right and right-to-left processing with `BiLSTM` / `BiGRU` and compare how bidirectional context changes the representation.
-  - **Day 5 (Prediction Challenge Set):** Create a small handwritten prediction set with neutral and order-sensitive sentiment examples to stress test model behavior.
-  - **Day 6 (Compare & Contrast):** Compare all models qualitatively and quantitatively: accuracy, training speed, stability, and failure cases. Digest and Blog.
+- **Study Plan:**
+  - Load the saved Week 3 IMDb tokenized dataset, vocabulary config, and `DAN` weights as the Week 4 baseline setup.
+  - Revisit `DAN + linear classifier` as the order-agnostic embedding baseline.
+  - Build a basic `RNN` sentiment classifier in PyTorch and use it to introduce hidden states over time.
+  - Reuse the same sequence pipeline to implement `GRU` and `LSTM`, then compare gating, hidden states, and memory states.
+  - Extend the recurrent setup to `BiLSTM` and compare unidirectional versus bidirectional context.
+  - Create a small handwritten benchmark set focused on negation, contrast, sentiment shift, and scope.
+  - Compare all models on validation performance, benchmark accuracy, inference speed, parameter count, and failure cases.
 - **Key Concepts:**
   - Why sequence order matters beyond bag-of-words style features.
-  - Order-agnostic baselines: `TF-IDF + Logistic Regression` and `DAN`.
+  - Order-agnostic embedding baseline: `DAN + linear classifier`.
   - Recurrence (`RNN`) vs. gating (`LSTM` / `GRU`).
   - Hidden states, memory states, sequence length, and vanishing gradients.
   - Bidirectionality.
-  - Behavioral testing with neutral and order-sensitive challenge inputs.
+  - Behavioral testing with order-sensitive benchmark inputs.
+  - Why the training dataset matters: architectural capacity only helps if the training signal rewards order-sensitive reasoning.
+  - Why dataset size and parameter count matter: larger recurrent models need enough data and the right supervision to realize their advantage.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews.
-  - **Demo:** IMDb-trained models evaluated on a small custom challenge set containing neutral, order-sensitive, and sarcastic-like review snippets.
+  - **Demo:** IMDb-trained models evaluated on a small custom benchmark set covering negation, contrast, sentiment shift, and scope.
 - **Data Source:** `datasets.load_dataset("imdb")`, manual challenge examples.
 - **Tech Stack:** `PyTorch`.
 
