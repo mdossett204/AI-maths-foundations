@@ -87,13 +87,19 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 #### **Week 5: Spatial Features in Text (CNNs)**
 
 - **Goal:** Using Convolutions for text.
-- **Key Concepts:**
-  - **1D Convolutions:** Acting as N-Gram (trigram/quadgram) detectors.
-  - **Feature Extraction:** Detecting "sentiment phrases" regardless of position.
-  - Efficiency: CNN speed vs. LSTM slowness.
+- **Core Concepts:**
+  - 1D convolutions as learned sliding-window feature detectors over text.
+  - Multiple filters/channels at kernel sizes `2`, `3`, and `4` learning different local phrase patterns.
+  - Parameter sharing across positions, so the same learned detector can fire anywhere in a review.
+  - Global max pooling versus mean pooling, with emphasis on why max pooling often preserves strong sentiment evidence better.
+  - `TextCNN`: `Embedding -> Conv1d -> ReLU -> Global Pool -> Linear`, using the saved IMDb tokenization pipeline and the learned `DAN` embedding from Week 3 as initialization.
+  - Training on IMDb using the same split setup as Week 4 for consistency.
+  - Inspecting learned feature maps and pooling behavior on a small handwritten challenge set targeting negation, intensifiers, and phrase relocation.
+  - CNN strengths for local phrase detection and efficient parallel computation, plus a short conceptual contrast with RNNs.
 - **Datasets:**
-  - **Anchor:** IMDB Movie Reviews (Perfect for n-gram based sentiment).
-- **Data Source:** `datasets.load_dataset("imdb")`.
+  - **Anchor:** IMDB Movie Reviews.
+  - **Demo:** IMDb-trained CNN evaluated on a small custom challenge set targeting local phrase phenomena.
+- **Data Source:** Saved Week 3/Week 4 IMDb tokenized assets, plus manual challenge examples.
 - **Tech Stack:** `PyTorch`.
 
 ---
