@@ -114,6 +114,54 @@ def bpe_batch_encode(
     return torch.tensor(input_ids, dtype=torch.long), torch.tensor(padding_masks, dtype=torch.long)
 
 
+def _render_token_span(tokens: List[str]) -> str:
+    if not tokens:
+        return ""
+
+    rendered = tokens[0]
+    for token in tokens[1:]:
+        if re.match(r"^[^\w\s]+$", token):
+            rendered += token
+        else:
+            rendered += " " + token
+    return rendered
+
+
+def get_approx_word_window_spans(
+    text: str, bpe_merges: List[Tuple[str, str]], kernel_size: int
+) -> List[str]:
+    """
+    Approximate each BPE sliding-window position with the word tokens that overlap it.
+
+    The convolution runs over byte-level BPE tokens, not words, so this function does
+    not recover the exact internal span. Instead, it maps each BPE window back to the
+    overlapping word-level tokens to produce a readable approximate span for notebook
+    interpretation.
+    """
+    words = word_tokenizer(text)
+    word_to_bpe_ranges = []
+    cursor = 0
+
+    for word in words:
+        bpe_tokens = _apply_bpe_to_word(word, bpe_merges, byte_level=True)
+        start = cursor
+        end = cursor + len(bpe_tokens)
+        word_to_bpe_ranges.append((start, end, word))
+        cursor = end
+
+    num_windows = max(0, cursor - kernel_size + 1)
+    spans = []
+    for window_start in range(num_windows):
+        window_end = window_start + kernel_size
+        overlapping_words = [
+            word
+            for start, end, word in word_to_bpe_ranges
+            if start < window_end and end > window_start
+        ]
+        spans.append(_render_token_span(overlapping_words))
+    return spans
+
+
 def plot_training_history(train_losses, val_losses, train_accs, val_accs):
     epochs = range(1, len(train_losses) + 1)
 
@@ -281,8 +329,8 @@ def train_test_model(
             f"train_acc={train_accuracy:.4f} val_acc={val_accuracy:.4f}"
         )
 
-        if save_path is not None:
-            torch.save(best_model_state, save_path)
+        if epoch % 2 == 0 and save_path is not None:
+            torch.save(best_model_state, save_path+f"{epoch}.pt")
 
         if early_stop:
             print(f"Early stopping at epoch {epoch + 1}")
@@ -294,13 +342,26 @@ def train_test_model(
 
 
 def load_pretrained_embedding(model: nn.Module, state_path: str, key: str = "embedding.weight") -> None:
-    state = torch.load(state_path, map_location="cpu")
+    device = model.embedding.weight.device
+    state = torch.load(state_path, map_location=device)
     if key not in state:
         raise KeyError(f"Could not find '{key}' in {state_path}")
     model.embedding.weight.data.copy_(state[key])
 
 
 def build_conv_mask(attention_mask: torch.Tensor, kernel_size: int) -> torch.Tensor:
+    """
+    Mark which sliding-window positions are fully inside the real (non-pad) part
+    of the sequence.
+
+    Example:
+    - attention mask: [1, 1, 1, 0, 0]
+    - kernel size: 2
+    - valid windows:  [1, 1, 0, 0]
+
+    This is used after convolution so pooled features ignore windows that include
+    padding tokens.
+    """
     window_mass = F.avg_pool1d(
         attention_mask.float().unsqueeze(1), kernel_size=kernel_size, stride=1
     ).squeeze(1)
@@ -333,4 +394,3 @@ def plot_feature_map_heatmap(
     plt.title(title or f"Kernel size {kernel_size} feature map")
     plt.tight_layout()
     plt.show()
-
