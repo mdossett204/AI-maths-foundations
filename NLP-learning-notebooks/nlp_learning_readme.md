@@ -108,15 +108,31 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 
 #### **Week 6: The Attention Revolution**
 
-- **Goal:** Build the Transformer architecture from scratch.
+- **Goal:** Build attention from scratch, then assemble a small Transformer block with modern positional handling.
+- **Study Plan:**
+  - Reuse the saved IMDb tokenized dataset, vocabulary config, and the same train/validation/test split pattern from Weeks 4 and 5 so the architecture comparison stays grounded.
+  - Start with scaled dot-product self-attention and build intuition for `Query`, `Key`, `Value`, attention scores, and attention weights.
+  - Extend the single-head version into multi-head attention and explain why different heads can focus on different relationships.
+  - Introduce the original Transformer-style positional encoding added after the embedding layer, then contrast it with rotary positional encoding (`RoPE`).
+  - Show why `RoPE` is widely used in modern Transformer and LLM architectures: position is injected directly inside each attention block by rotating query/key vectors, which preserves vector geometry better and makes attention scores more naturally sensitive to **relative** position.
+  - Build a pre-norm Transformer block with residual connections, self-attention, feed-forward layers, and layer normalization.
+  - Add cross-attention as an extension so the block can support both encoder-style self-attention and encoder-decoder style attention.
+  - Visualize attention maps in color to inspect what tokens each head is focusing on.
+  - Use a tiny handwritten paired-text challenge set, similar in spirit to the Week 4 and Week 5 benchmark probes, to demonstrate cross-attention behavior without introducing a full seq2seq dataset yet.
 - **Key Concepts:**
-  - Self-Attention (Query, Key, Value).
-  - The Transformer Block.
-  - Positional Encodings.
+  - Scaled dot-product self-attention: `Q`, `K`, `V`, masking, and attention weights.
+  - Multi-head attention.
+  - Traditional positional encoding after the embedding layer.
+  - Rotary positional encoding (`RoPE`) inside attention blocks.
+  - Why matrix rotation is a better modern positional strategy than only adding position vectors once at the input.
+  - Residual connections, layer normalization, and feed-forward sublayers inside a Transformer block.
+  - Self-attention vs. cross-attention.
+  - Attention heatmaps for interpretation.
 - **Datasets:**
-  - **Anchor:** IMDB (Training a small Transformer encoder from scratch).
-- **Data Source:** `datasets.load_dataset("imdb")`.
-- **Tech Stack:** `PyTorch`.
+  - **Anchor:** IMDB Movie Reviews.
+  - **Demo:** Small handwritten paired-text attention set for cross-attention probes such as review snippet + query.
+- **Data Source:** Saved Week 4/Week 5 IMDb tokenized assets, plus manual toy paired-text examples.
+- **Tech Stack:** `PyTorch`, `matplotlib`.
 
 #### **Week 7: Transfer Learning (BERTology)**
 
