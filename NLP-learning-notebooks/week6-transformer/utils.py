@@ -658,28 +658,52 @@ def train_binary_classifier(
     return model
 
 
+def _render_attention_matrix(
+    matrix: torch.Tensor,
+    query_tokens: List[str],
+    key_tokens: List[str],
+    title: str,
+    cmap: str,
+    ax: Optional[plt.Axes] = None,
+    show_colorbar: bool = True,
+) -> None:
+    if ax is None:
+        ax = plt.gca()
+    im = ax.imshow(matrix, aspect="auto", cmap=cmap)
+    ax.set_xticks(range(len(key_tokens)))
+    ax.set_xticklabels(key_tokens, rotation=45, ha="right")
+    ax.set_yticks(range(len(query_tokens)))
+    ax.set_yticklabels(query_tokens)
+    ax.set_xlabel("Key / Value tokens")
+    ax.set_ylabel("Query tokens")
+    ax.set_title(title)
+    if show_colorbar:
+        ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Attention weight")
+
+
 def plot_attention_heatmap(
     attention: torch.Tensor,
     query_tokens: List[str],
     key_tokens: Optional[List[str]] = None,
     title: str = "",
     head: int = 0,
+    batch_idx: int = 0,
     cmap: str = "magma",
 ) -> None:
     if attention.dim() != 4:
         raise ValueError("attention must have shape [batch, heads, query_len, key_len].")
 
-    matrix = attention[0, head].detach().cpu()
+    matrix = attention[batch_idx, head].detach().cpu()
     key_tokens = query_tokens if key_tokens is None else key_tokens
 
     plt.figure(figsize=(max(6, 0.6 * len(key_tokens)), max(4, 0.5 * len(query_tokens))))
-    plt.imshow(matrix, aspect="auto", cmap=cmap)
-    plt.colorbar(label="Attention weight")
-    plt.xticks(range(len(key_tokens)), key_tokens, rotation=45, ha="right")
-    plt.yticks(range(len(query_tokens)), query_tokens)
-    plt.xlabel("Key / Value tokens")
-    plt.ylabel("Query tokens")
-    plt.title(title or f"Attention heatmap (head {head})")
+    _render_attention_matrix(
+        matrix=matrix,
+        query_tokens=query_tokens,
+        key_tokens=key_tokens,
+        title=title or f"Attention heatmap (batch {batch_idx}, head {head})",
+        cmap=cmap,
+    )
     plt.tight_layout()
     plt.show()
 
@@ -689,6 +713,7 @@ def plot_attention_heads(
     query_tokens: List[str],
     key_tokens: Optional[List[str]] = None,
     max_heads: int = 4,
+    batch_idx: int = 0,
     cmap: str = "magma",
 ) -> None:
     if attention.dim() != 4:
@@ -701,17 +726,15 @@ def plot_attention_heads(
         axes = [axes]
 
     for head_idx in range(num_heads):
-        matrix = attention[0, head_idx].detach().cpu()
-        ax = axes[head_idx]
-        im = ax.imshow(matrix, aspect="auto", cmap=cmap)
-        ax.set_title(f"Head {head_idx}")
-        ax.set_xticks(range(len(key_tokens)))
-        ax.set_xticklabels(key_tokens, rotation=45, ha="right")
-        ax.set_yticks(range(len(query_tokens)))
-        ax.set_yticklabels(query_tokens)
-        ax.set_xlabel("Keys")
-        ax.set_ylabel("Queries")
-        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        matrix = attention[batch_idx, head_idx].detach().cpu()
+        _render_attention_matrix(
+            matrix=matrix,
+            query_tokens=query_tokens,
+            key_tokens=key_tokens,
+            title=f"Head {head_idx}",
+            cmap=cmap,
+            ax=axes[head_idx],
+        )
 
     plt.tight_layout()
     plt.show()
