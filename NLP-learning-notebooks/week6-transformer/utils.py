@@ -56,29 +56,63 @@ def word_tokenizer(text: str) -> List[str]:
     return re.findall(r"\w+|[^\w\s]", text.lower(), flags=re.UNICODE)
 
 
-def build_word_vocab(
-    texts: Iterable[str],
-    specials: Tuple[str, str] = ("[PAD]", "[UNK]"),
-) -> Dict[str, int]:
-    vocab = {token: idx for idx, token in enumerate(specials)}
-    for text in texts:
-        for token in word_tokenizer(text):
-            if token not in vocab:
-                vocab[token] = len(vocab)
-    return vocab
+def byte_level_tokenizer(text: str) -> List[int]:
+    return list(text.encode("utf-8"))
 
 
-def encode_word_sequence(
+def _apply_bpe_to_word(
+    word: str,
+    merges: List[Tuple[str, str]],
+    byte_level: bool = False,
+) -> List[str]:
+    if byte_level:
+        tokens = [str(byte) for byte in byte_level_tokenizer(word)] + ["</w>"]
+    else:
+        tokens = list(word) + ["</w>"]
+
+    if not merges:
+        return [token for token in tokens if token != "</w>"]
+
+    for a, b in merges:
+        i = 0
+        new_tokens = []
+        while i < len(tokens):
+            if i < len(tokens) - 1 and tokens[i] == a and tokens[i + 1] == b:
+                new_tokens.append(a + b)
+                i += 2
+            else:
+                new_tokens.append(tokens[i])
+                i += 1
+        tokens = new_tokens
+        if len(tokens) == 2:
+            break
+
+    return [token for token in tokens if token != "</w>"]
+
+
+def bpe_tokenizer(
     text: str,
-    vocab: Dict[str, int],
+    merges: List[Tuple[str, str]],
+    byte_level: bool = True,
+) -> List[str]:
+    tokens = []
+    for word in word_tokenizer(text):
+        tokens.extend(_apply_bpe_to_word(word, merges, byte_level=byte_level))
+    return tokens
+
+
+def encode_bpe_sequence(
+    text: str,
+    bpe_merges: List[Tuple[str, str]],
+    bpe_vocab: Dict[str, int],
     max_len: int,
     pad_token: str = "[PAD]",
-    unk_token: str = "[UNK]",
+    byte_level: bool = True,
 ) -> Tuple[List[int], List[int], List[str]]:
-    tokens = word_tokenizer(text)[:max_len]
-    ids = [vocab.get(token, vocab[unk_token]) for token in tokens]
+    tokens = bpe_tokenizer(text, bpe_merges, byte_level=byte_level)[:max_len]
+    ids = [bpe_vocab[token] for token in tokens]
     mask = [1] * len(ids)
-    pad_id = vocab[pad_token]
+    pad_id = bpe_vocab[pad_token]
 
     if len(ids) < max_len:
         pad_size = max_len - len(ids)
@@ -89,23 +123,25 @@ def encode_word_sequence(
     return ids, mask, tokens
 
 
-def batch_encode_word_sequences(
+def bpe_batch_encode(
     texts: List[str],
-    vocab: Dict[str, int],
+    bpe_merges: List[Tuple[str, str]],
+    bpe_vocab: Dict[str, int],
     max_len: int,
     pad_token: str = "[PAD]",
-    unk_token: str = "[UNK]",
+    byte_level: bool = True,
 ) -> Tuple[torch.Tensor, torch.Tensor, List[List[str]]]:
     all_ids = []
     all_masks = []
     all_tokens = []
     for text in texts:
-        ids, mask, tokens = encode_word_sequence(
+        ids, mask, tokens = encode_bpe_sequence(
             text=text,
-            vocab=vocab,
+            bpe_merges=bpe_merges,
+            bpe_vocab=bpe_vocab,
             max_len=max_len,
             pad_token=pad_token,
-            unk_token=unk_token,
+            byte_level=byte_level,
         )
         all_ids.append(ids)
         all_masks.append(mask)
@@ -339,6 +375,7 @@ class TransformerBlock(nn.Module):
         dropout: float = 0.1,
         use_rope: bool = False,
         enable_cross_attention: bool = False,
+        cross_attention_uses_rope: bool = False,
         is_causal: bool = False,
     ):
         super().__init__()
@@ -357,7 +394,7 @@ class TransformerBlock(nn.Module):
                 d_model=d_model,
                 num_heads=num_heads,
                 dropout=dropout,
-                use_rope=False,
+                use_rope=cross_attention_uses_rope,
                 is_causal=False,
             )
         self.ffn_norm = nn.LayerNorm(d_model)
