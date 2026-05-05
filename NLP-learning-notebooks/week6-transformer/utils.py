@@ -375,7 +375,6 @@ class TransformerBlock(nn.Module):
         dropout: float = 0.1,
         use_rope: bool = False,
         enable_cross_attention: bool = False,
-        cross_attention_uses_rope: bool = False,
         is_causal: bool = False,
     ):
         super().__init__()
@@ -394,7 +393,7 @@ class TransformerBlock(nn.Module):
                 d_model=d_model,
                 num_heads=num_heads,
                 dropout=dropout,
-                use_rope=cross_attention_uses_rope,
+                use_rope=False,
                 is_causal=False,
             )
         self.ffn_norm = nn.LayerNorm(d_model)
