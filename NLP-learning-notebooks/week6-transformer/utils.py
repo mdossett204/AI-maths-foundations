@@ -3,6 +3,7 @@ import json
 import math
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -471,9 +472,22 @@ class TinyTransformerClassifier(nn.Module):
         use_rope: bool = True,
         use_absolute_positions: bool = False,
         max_seq_len: int = 512,
+        pretrained_embedding_weight: Optional[torch.Tensor] = None,
     ):
         super().__init__()
-        self.embedding = nn.Embedding(vocab_size, d_model, padding_idx=pad_id)
+        if pretrained_embedding_weight is not None:
+            if pretrained_embedding_weight.shape != (vocab_size, d_model):
+                raise ValueError(
+                    "pretrained_embedding_weight must have shape "
+                    f"({vocab_size}, {d_model}), got {tuple(pretrained_embedding_weight.shape)}."
+                )
+            self.embedding = nn.Embedding.from_pretrained(
+                pretrained_embedding_weight.detach().clone(),
+                freeze=False,
+                padding_idx=pad_id,
+            )
+        else:
+            self.embedding = nn.Embedding(vocab_size, d_model, padding_idx=pad_id)
         self.dropout = nn.Dropout(dropout)
         self.use_absolute_positions = use_absolute_positions
         self.max_seq_len = max_seq_len
@@ -626,8 +640,13 @@ def train_binary_classifier(
     lr: float = 3e-4,
     weight_decay: float = 1e-4,
     patience: int = 2,
+    save_model_path: Optional[Union[str, Path]] = None,
 ) -> nn.Module:
     model.to(device)
+    if save_model_path is not None:
+        save_model_path = Path(save_model_path)
+        save_model_path.parent.mkdir(parents=True, exist_ok=True)
+
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -670,6 +689,7 @@ def train_binary_classifier(
         val_losses.append(val_loss)
         val_accs.append(val_acc)
 
+        previous_lowest_loss = lowest_loss
         best_model_state, lowest_loss, counter, early_stop = check_early_stop(
             patience=patience,
             val_loss=val_loss,
@@ -678,6 +698,9 @@ def train_binary_classifier(
             lowest_loss=lowest_loss,
             counter=counter,
         )
+        if save_model_path is not None and lowest_loss < previous_lowest_loss:
+            torch.save(best_model_state, save_model_path)
+            print(f"Saved best model state to {save_model_path}")
 
         print(
             f"Epoch {epoch + 1:02d} | "
@@ -690,6 +713,7 @@ def train_binary_classifier(
             break
 
     model.load_state_dict(best_model_state)
+
     plot_training_history(train_losses, val_losses, train_accs, val_accs)
     return model
 
