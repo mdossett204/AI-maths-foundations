@@ -921,3 +921,12 @@ def plot_attention_heads(
 
     plt.tight_layout()
     plt.show()
+
+def linear_cka(X: torch.Tensor, Y: torch.Tensor) -> float:
+    """Linear CKA between two representation matrices [n, d]."""
+    X = X - X.mean(0, keepdim=True)
+    Y = Y - Y.mean(0, keepdim=True)
+    gram_xy = (X @ Y.T).norm("fro") ** 2
+    gram_xx = (X @ X.T).norm("fro")
+    gram_yy = (Y @ Y.T).norm("fro")
+    return (gram_xy / (gram_xx * gram_yy + 1e-8)).item()
