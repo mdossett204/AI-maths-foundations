@@ -547,6 +547,129 @@ class TinyTransformerClassifier(nn.Module):
         return logits
 
 
+class TinyBERT(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        d_model: int,
+        num_heads: int,
+        mlp_hidden_dim: int,
+        num_layers: int,
+        pad_id: int,
+        dropout: float = 0.1,
+        use_rope: bool = False,
+        use_absolute_positions: bool = True,
+        max_seq_len: int = 512,
+        pretrained_embedding_weight: Optional[torch.Tensor] = None,
+    ):
+        super().__init__()
+        if pretrained_embedding_weight is not None:
+            if pretrained_embedding_weight.shape != (vocab_size, d_model):
+                raise ValueError(
+                    "pretrained_embedding_weight must have shape "
+                    f"({vocab_size}, {d_model}), got {tuple(pretrained_embedding_weight.shape)}."
+                )
+            self.embedding = nn.Embedding.from_pretrained(
+                pretrained_embedding_weight.detach().clone(),
+                freeze=False,
+                padding_idx=pad_id,
+            )
+        else:
+            self.embedding = nn.Embedding(vocab_size, d_model, padding_idx=pad_id)
+        self.dropout = nn.Dropout(dropout)
+        self.use_absolute_positions = use_absolute_positions
+        self.max_seq_len = max_seq_len
+
+        if use_absolute_positions:
+            pe = sinusoidal_position_encoding(seq_len=max_seq_len, d_model=d_model)
+            self.register_buffer("absolute_position_encoding", pe, persistent=False)
+
+        self.blocks = nn.ModuleList(
+            [
+                TransformerBlock(
+                    d_model=d_model,
+                    num_heads=num_heads,
+                    mlp_hidden_dim=mlp_hidden_dim,
+                    dropout=dropout,
+                    use_rope=use_rope,
+                    enable_cross_attention=False,
+                    is_causal=False,
+                )
+                for _ in range(num_layers)
+            ]
+        )
+        self.final_norm = nn.LayerNorm(d_model)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        return_attention: bool = False,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, List[torch.Tensor]]]:
+        x = self.embedding(input_ids)
+
+        if self.use_absolute_positions:
+            pos = self.absolute_position_encoding[: input_ids.size(1)].to(device=x.device, dtype=x.dtype)
+            x = x + pos.unsqueeze(0)
+
+        x = self.dropout(x)
+        all_attentions = []
+
+        for block in self.blocks:
+            if return_attention:
+                x, attention_dict = block(
+                    x=x,
+                    attention_mask=attention_mask,
+                    return_attentions=True,
+                )
+                all_attentions.append(attention_dict["self_attention"])
+            else:
+                x = block(x=x, attention_mask=attention_mask)
+
+        x = self.final_norm(x)
+
+        if return_attention:
+            return x, all_attentions
+        return x
+
+
+class TinySBERT(nn.Module):
+    def __init__(self, bert_model: nn.Module):
+        super().__init__()
+        self.bert = bert_model
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        token_embeddings = self.bert(input_ids, attention_mask)
+        if isinstance(token_embeddings, tuple):
+            token_embeddings = token_embeddings[0]
+
+        # Mean pooling to get sentence embeddings
+        sentence_embeddings = masked_mean_pool(token_embeddings, attention_mask)
+        
+        # L2 Normalization
+        sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
+        return sentence_embeddings
+
+
+def create_bert(**kwargs) -> TinyBERT:
+    """
+    Creates a BERT model leveraging the existing TransformerBlock.
+    Expected kwargs: vocab_size, d_model, num_heads, mlp_hidden_dim, num_layers, pad_id
+    """
+    return TinyBERT(**kwargs)
+
+
+def create_sbert(bert_model: nn.Module) -> TinySBERT:
+    """
+    Wraps a given BERT model to produce sentence embeddings (SBERT) using mean pooling.
+    """
+    return TinySBERT(bert_model)
+
+
 def get_correct_predictions(logits: torch.Tensor, labels: torch.Tensor) -> float:
     probs = torch.sigmoid(logits)
     preds = (probs > 0.5).float()
