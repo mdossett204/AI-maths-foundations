@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Union
+import numpy as np
 
 import matplotlib.pyplot as plt
 import torch
