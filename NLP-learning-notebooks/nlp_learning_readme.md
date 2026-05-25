@@ -173,7 +173,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 #### **Week 9: Encoder-Decoder Generation (T5)**
 
-- **Notebook:** `week8-decoder/Week_8_T5.ipynb`
+- **Notebook:** `week9-t5/Week_9_T5.ipynb`
 - **Goal:** Learn seq2seq generation through T5's text-to-text framing and fine-tune a small model for English-to-German translation.
 - **Study Plan:**
   - Set up reproducible training with the same CPU, MPS, or CUDA device pattern.
