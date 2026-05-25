@@ -39,7 +39,8 @@ def build_causal_mask(
     device: Optional[torch.device] = None,
 ) -> torch.Tensor:
     key_len = key_len if key_len is not None else query_len
-    return torch.tril(torch.ones(query_len, key_len, dtype=torch.bool, device=device)).unsqueeze(0).unsqueeze(0)
+    diagonal_offset = key_len - query_len
+    return torch.tril(torch.ones(query_len, key_len, dtype=torch.bool, device=device), diagonal=diagonal_offset).unsqueeze(0).unsqueeze(0)
 
 
 def scaled_dot_product_attention(
@@ -230,6 +231,7 @@ class TinyGPT(nn.Module):
         )
         self.final_norm = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
+        self.lm_head.weight = self.embedding.weight # Weight Tying optimization
 
     def forward(
         self,
@@ -313,8 +315,8 @@ def train_tiny_gpt(
                 if save_model_path is not None:
                     torch.save(best_model_state, save_model_path)
                     print(f"Saved best model state to {save_model_path}")
-    
-        print(f"epoch {epoch+1} | loss {loss.item():.4f}")
+        if epoch % 10 == 0:
+            print(f"epoch {epoch+1} | loss {loss.item():.4f}")
             
     model.load_state_dict(best_model_state)
     return model
