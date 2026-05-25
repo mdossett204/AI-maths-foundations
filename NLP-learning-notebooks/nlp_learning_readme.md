@@ -134,17 +134,26 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Data Source:** Saved Week 4/Week 5 IMDb tokenized assets, plus manual toy paired-text examples.
 - **Tech Stack:** `PyTorch`, `matplotlib`.
 
-#### **Week 7: Transfer Learning (BERTology)**
+#### **Week 7: Transfer Learning (BERT & SBERT)**
 
-- **Goal:** Fine-tuning pre-trained encoders.
+- **Goal:** Extend the Transformer architecture to build an encoder, and explore BERT and Sentence-BERT (SBERT) for transfer learning.
+- **Daily Plan:**
+  - **Day 1 (Building an Encoder):** Extend Week 6's Transformer block into a full Encoder architecture. Understand how multiple layers stack to build deep contextual representations.
+  - **Day 2 (BERT Architecture & Pre-training):** Introduce BERT (Bidirectional Encoder Representations from Transformers). Explore its Masked Language Modeling (MLM) and Next Sentence Prediction (NSP) objectives.
+  - **Day 3 (Fine-tuning BERT):** Hands-on with fine-tuning a pre-trained BERT model for a classification task using the Hugging Face `Trainer` API.
+  - **Day 4 (Sentence-BERT - SBERT):** Introduce SBERT and Siamese networks. Understand why standard BERT is slow for semantic similarity and how SBERT solves this by producing sentence embeddings.
+  - **Day 5 (SBERT in Action):** Implement semantic search or retrieval using SBERT embeddings and compare performance with Week 3's baseline.
 - **Key Concepts:**
-  - **Extractive QA:** Teaching a model to find answers in text.
-  - The `Trainer` API.
+  - Transformer Encoders.
+  - BERT Pre-training (MLM, NSP) and Fine-tuning.
+  - Sentence Embeddings vs. Token Embeddings.
+  - Siamese Network Architecture (SBERT).
+  - Semantic Similarity and Retrieval.
 - **Datasets:**
   - **Anchor:** IMDB (Classification).
-  - **Demo:** **SQuAD** (Stanford Question Answering Dataset) - BERT's specialty.
-- **Data Source:** `datasets.load_dataset("imdb")`, `datasets.load_dataset("squad")`.
-- **Tech Stack:** Hugging Face `transformers`.
+  - **Demo:** STS (Semantic Textual Similarity) dataset for SBERT.
+- **Data Source:** Hugging Face `datasets`.
+- **Tech Stack:** `PyTorch`, Hugging Face `transformers`, `sentence-transformers`.
 
 #### **Week 8: Decoder-Only Generation (GPT)**
 
