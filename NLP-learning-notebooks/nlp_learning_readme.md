@@ -1,6 +1,6 @@
 # Zero to Hero: NLP Classification & Generation
 
-Welcome to this comprehensive 8-week course designed to guide you from the fundamentals of classical text processing to the cutting edge of modern Large Language Models.
+Welcome to this comprehensive 9-week course designed to guide you from the fundamentals of classical text processing to the cutting edge of modern Large Language Models.
 
 ## Course Roadmap
 
@@ -155,14 +155,56 @@ Welcome to this comprehensive 8-week course designed to guide you from the funda
 - **Data Source:** Hugging Face `datasets`.
 - **Tech Stack:** `PyTorch`, Hugging Face `transformers`, `sentence-transformers`.
 
-#### **Week 8: Generative AI (GPT & T5)**
+#### **Week 8: Decoder-Only Generation (GPT)**
 
-- **Goal:** Text Generation and Translation.
+- **Notebook:** `week8-decoder/Week_8_GPT.ipynb`
+- **Goal:** Understand GPT-style causal language modeling, then fine-tune a small pretrained decoder-only model for text completion.
+- **Study Plan:**
+  - Set up reproducible PyTorch training with CPU, MPS, or CUDA device detection.
+  - Build a tiny decoder-only Transformer in pure PyTorch to make the architecture concrete.
+  - Implement token embeddings, positional embeddings, stacked Transformer blocks, a causal self-attention mask, and an LM head.
+  - Train the tiny model on a self-contained character-level text snippet with next-token prediction loss.
+  - Move to Hugging Face `transformers` and fine-tune `distilgpt2` with CPU-friendly defaults.
+  - Tokenize and group WikiText into fixed-length causal language modeling blocks.
+  - Configure `Trainer` with small batches, gradient accumulation, short sequence length, step-based evaluation, and checkpointing.
+  - Run a generation demo from a prompt before or after fine-tuning.
 - **Key Concepts:**
-  - **Encoder-Decoder (T5):** Text-to-Text Transfer (Translation).
-  - **Decoder-Only (GPT):** Causal Language Modeling (Text Completion).
+  - Decoder-only Transformer architecture.
+  - Causal self-attention and future-token masking.
+  - Next-token prediction.
+  - Language modeling heads and logits over vocabulary.
+  - Transfer learning for generation with pretrained GPT models.
 - **Datasets:**
-  - **T5 Demo:** **WMT** (English-to-German Translation).
-  - **GPT Demo:** **Shakespeare** or **WikiText** (Creative Generation).
-- **Data Source:** `datasets.load_dataset("opus100", "en-de")`, `datasets.load_dataset("wikitext", "wikitext-2-v1")`.
-- **Tech Stack:** Hugging Face `transformers`.
+  - **Scratch Demo:** Small character-level text snippet.
+  - **Fine-tuning Demo:** **WikiText-2** for causal language modeling.
+- **Data Source:** In-notebook toy text, `datasets.load_dataset("wikitext", "wikitext-2-v1")`.
+- **Tech Stack:** `PyTorch`, Hugging Face `datasets`, Hugging Face `transformers`.
+
+#### **Week 9: Encoder-Decoder Generation (T5)**
+
+- **Notebook:** `week9-t5/Week_9_T5.ipynb`
+- **Goal:** Learn seq2seq generation through T5's text-to-text framing and fine-tune a small model for English-to-German translation.
+- **Study Plan:**
+  - Set up reproducible training with the same CPU, MPS, or CUDA device pattern.
+  - Compare GPT-style decoder-only generation with T5-style encoder-decoder generation.
+  - Build a tiny T5-style encoder-decoder Transformer in pure PyTorch to make the architecture concrete.
+  - Review how the T5 encoder reads the full source sequence with bidirectional self-attention.
+  - Review how the T5 decoder uses causal self-attention plus cross-attention into encoder states.
+  - Train the tiny model on a synthetic reverse-sequence task using shifted-right decoder inputs and teacher forcing.
+  - Frame translation as text-to-text generation with the prefix `translate English to German:`.
+  - Load `opus100` English-German examples and create small CPU-friendly train and validation slices.
+  - Tokenize source and target text with capped source and target lengths.
+  - Fine-tune `t5-small` with `DataCollatorForSeq2Seq`, `Trainer`, gradient accumulation, step-based evaluation, and checkpointing.
+  - Run a beam-search translation demo before or after fine-tuning.
+- **Key Concepts:**
+  - Encoder-decoder Transformer architecture.
+  - Text-to-text transfer learning.
+  - Bidirectional encoder self-attention.
+  - Decoder causal self-attention and encoder-decoder cross-attention.
+  - Teacher forcing for seq2seq training.
+  - Beam search for translation generation.
+- **Datasets:**
+  - **Scratch Demo:** Synthetic reverse-sequence seq2seq task.
+  - **Translation Demo:** **OPUS-100** English-to-German translation.
+- **Data Source:** In-notebook synthetic token sequences, `datasets.load_dataset("opus100", "en-de")`.
+- **Tech Stack:** `PyTorch`, Hugging Face `datasets`, Hugging Face `transformers`.
