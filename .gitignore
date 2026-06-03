@@ -209,3 +209,15 @@ __marimo__/
 *DS_Store
 *env*
 *pdf
+
+#antigravitycli
+*antigravitycli*
+
+#models 
+*.npy
+*models*
+*.pth
+*.zip
+*checkpoints*
+*runs*
+*.tsv
