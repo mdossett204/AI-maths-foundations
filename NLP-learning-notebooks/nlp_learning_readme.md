@@ -9,11 +9,16 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 #### **Week 1: Classical Machine Learning for Text**
 
 - **Goal:** Establish a strong baseline. Understand how to turn text into numbers and the mechanics of classification (Weights & Gradients).
-- **Daily Plan:**
-  - **Day 1 (Vectorization):** Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TFIDFVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
-  - **Day 2 & 3 (Binary Classification & Training):** The "Black Box" (Sklearn) vs. The "White Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, SVM, and Simple NN.
-  - **Day 4-5 (Multi-class Classification):** Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression (PyTorch).
-  - **Day 6-7:** Digest and Blog.
+- **Study Plan:**
+  - **Day 1 – Vectorization** `classical-ML-vectorization.ipynb`: Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TfidfVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
+  - **Day 2–3 – Binary Classification & Training** `binary-classification-pytorch-vs-sklearn.ipynb`: The "Black Box" (Sklearn) vs. The "White Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, SVM, and Simple NN.
+  - **Day 4–5 – Multi-class Classification** `multiclass-classification-pytorch-vs-sklearn.ipynb`: Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression (PyTorch).
+  - **Review:** Digest and Blog.
+- **Key Concepts:**
+  - **Vectorization:** Bag of Words vs. TF-IDF.
+  - **Tensors:** Converting sparse matrices to dense PyTorch tensors.
+  - **Classification:** Logistic Regression, SVM, and Naive Bayes vs. Neural Networks.
+  - **Training Loop:** Forward pass, loss calculation, and backward pass.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews (Binary Sentiment).
   - **Demo:** **20 Newsgroups** (Multi-class Topic Classification: Sports, Tech, Politics, etc.).
@@ -23,10 +28,10 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 #### **Week 2: The Mechanics of Meaning (Tokenization)**
 
 - **Goal:** Open the "black box" of tokenization.
-- **Daily Plan:**
-  - **Day 1 (Concepts):** Key concepts (Word, Char, Subword, Byte-level). Compare and contrast. Special tokens and multilingual issues.
-  - **Day 2 (From Scratch):** Implementation of WordPiece and BPE algorithms **from scratch**.
-  - **Day 3 (Modern Usage):** Tying it back to LLMs and modern usage. Integration with Hugging Face `tokenizers`.
+- **Study Plan:**
+  - **Concepts:** Key concepts (Word, Char, Subword, Byte-level). Compare and contrast. Special tokens and multilingual issues.
+  - **From Scratch:** Implementation of WordPiece and BPE algorithms **from scratch**.
+  - **Modern Usage:** Tying it back to LLMs and modern usage. Integration with Hugging Face `tokenizers`.
 - **Key Concepts:**
   - **The OOV Problem:** Why word-level splitting fails on complex languages.
   - **Byte-Level BPE:** How to handle any language (Chinese, Emoji) using bytes.
@@ -44,11 +49,11 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 #### **Week 3: Vector Space Semantics (Embeddings & MLPs)**
 
 - **Goal:** Transition to dense, semantic vectors.
-- **Focused 4-Day Plan (single notebook):**
-  1. Tokenizer → IDs → padding/masks (use Week 2 tokenizer outputs).
-  2. Train a simple embedding model (DAN: `Embedding → mean pool → MLP → classifier`).
-  3. Briefly compare with pretrained word embeddings (mention SBERT only, defer depth).
-  4. Real‑world usage: similarity search, clustering, retrieval foundations.
+- **Study Plan:**
+  - Tokenizer → IDs → padding/masks (use Week 2 tokenizer outputs).
+  - Train a simple embedding model (DAN: `Embedding → mean pool → MLP → classifier`).
+  - Briefly compare with pretrained word embeddings (mention SBERT only, defer depth).
+  - Real‑world usage: similarity search, clustering, retrieval foundations.
 - **Key Concepts:**
   - Embeddings: `King - Man + Woman = Queen`.
   - The `nn.Embedding` layer in PyTorch.
@@ -137,12 +142,12 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 #### **Week 7: Transfer Learning (BERT & SBERT)**
 
 - **Goal:** Extend the Transformer architecture to build an encoder, and explore BERT and Sentence-BERT (SBERT) for transfer learning.
-- **Daily Plan:**
-  - **Day 1 (Building an Encoder):** Extend Week 6's Transformer block into a full Encoder architecture. Understand how multiple layers stack to build deep contextual representations.
-  - **Day 2 (BERT Architecture & Pre-training):** Introduce BERT (Bidirectional Encoder Representations from Transformers). Explore its Masked Language Modeling (MLM) and Next Sentence Prediction (NSP) objectives.
-  - **Day 3 (Fine-tuning BERT):** Hands-on with fine-tuning a pre-trained BERT model for a classification task using the Hugging Face `Trainer` API.
-  - **Day 4 (Sentence-BERT - SBERT):** Introduce SBERT and Siamese networks. Understand why standard BERT is slow for semantic similarity and how SBERT solves this by producing sentence embeddings.
-  - **Day 5 (SBERT in Action):** Implement semantic search or retrieval using SBERT embeddings and compare performance with Week 3's baseline.
+- **Study Plan:**
+  - **Building an Encoder:** Extend Week 6's Transformer block into a full Encoder architecture. Understand how multiple layers stack to build deep contextual representations.
+  - **BERT Architecture & Pre-training:** Introduce BERT (Bidirectional Encoder Representations from Transformers). Explore its Masked Language Modeling (MLM) and Next Sentence Prediction (NSP) objectives.
+  - **Fine-tuning BERT:** Hands-on with fine-tuning a pre-trained BERT model for a classification task using the Hugging Face `Trainer` API.
+  - **Sentence-BERT - SBERT:** Introduce SBERT and Siamese networks. Understand why standard BERT is slow for semantic similarity and how SBERT solves this by producing sentence embeddings.
+  - **SBERT in Action:** Implement semantic search or retrieval using SBERT embeddings and compare performance with Week 3's baseline.
 - **Key Concepts:**
   - Transformer Encoders.
   - BERT Pre-training (MLM, NSP) and Fine-tuning.
@@ -177,6 +182,8 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Datasets:**
   - **Scratch Demo:** Small character-level text snippet.
   - **Fine-tuning Demo:** **WikiText-2** for causal language modeling.
+  - **Anchor:** **WikiText-2** for causal language modeling.
+  - **Demo:** Small character-level text snippet (Scratch Demo).
 - **Data Source:** In-notebook toy text, `datasets.load_dataset("wikitext", "wikitext-2-v1")`.
 - **Tech Stack:** `PyTorch`, Hugging Face `datasets`, Hugging Face `transformers`.
 
@@ -191,8 +198,8 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - Review how the T5 encoder reads the full source sequence with bidirectional self-attention.
   - Review how the T5 decoder uses causal self-attention plus cross-attention into encoder states.
   - Train the tiny model on a synthetic reverse-sequence task using shifted-right decoder inputs and teacher forcing.
-  - Frame translation as text-to-text generation with the prefix `translate English to German:`.
-  - Load `opus100` English-German examples and create small CPU-friendly train and validation slices.
+  - Frame translation as text-to-text generation with the prefix `translate German to English:`.
+  - Load `opus_books` German-English examples and create small CPU-friendly train and validation slices.
   - Tokenize source and target text with capped source and target lengths.
   - Fine-tune `t5-small` with `DataCollatorForSeq2Seq`, `Trainer`, gradient accumulation, step-based evaluation, and checkpointing.
   - Run a beam-search translation demo before or after fine-tuning.
@@ -204,7 +211,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - Teacher forcing for seq2seq training.
   - Beam search for translation generation.
 - **Datasets:**
-  - **Scratch Demo:** Synthetic reverse-sequence seq2seq task.
-  - **Translation Demo:** **OPUS-100** English-to-German translation.
-- **Data Source:** In-notebook synthetic token sequences, `datasets.load_dataset("opus100", "en-de")`.
+  - **Anchor:** **OPUS Books** German-to-English translation.
+  - **Demo:** Synthetic reverse-sequence seq2seq task (Scratch Demo).
+- **Data Source:** In-notebook synthetic token sequences, `datasets.load_dataset("opus_books", "de-en")`.
 - **Tech Stack:** `PyTorch`, Hugging Face `datasets`, Hugging Face `transformers`.
