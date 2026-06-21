@@ -1,9 +1,20 @@
+# Data & ML
 scikit-learn
+pandas
+
+# Deep Learning
+torch
+
+# Datasets & Hugging Face
+datasets
+
+# Visualisation
 matplotlib
 seaborn
-torch
+
+# Notebook utilities
 tqdm
 ipywidgets
-pandas
-datasets
+
+# Environment
 python-dotenv
