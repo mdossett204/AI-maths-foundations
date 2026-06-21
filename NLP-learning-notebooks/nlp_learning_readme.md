@@ -11,8 +11,8 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Goal:** Establish a strong baseline. Understand how to turn text into numbers and the mechanics of classification (Weights & Gradients).
 - **Study Plan:**
   - **Day 1 – Vectorization** `classical-ML-vectorization.ipynb`: Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TfidfVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
-  - **Day 2–3 – Binary Classification & Training** `binary-classification-pytorch-vs-sklearn.ipynb`: The "Black Box" (Sklearn) vs. The "White Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, SVM, and Simple NN.
-  - **Day 4–5 – Multi-class Classification** `multiclass-classification-pytorch-vs-sklearn.ipynb`: Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression (PyTorch).
+  - **Day 2–3 – Binary Classification & Training** `binary-classification-pytorch-vs-sklearn.ipynb`: The "Black Box" (Sklearn) vs. The "White Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, Decision Tree, Random Forest, Gradient Boosting classifier, SVM, and Simple NN.
+  - **Day 4–5 – Multi-class Classification** `multiclass-classification-pytorch-vs-sklearn.ipynb`: Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression in PyTorch with MLP (hidden layer + ReLU + Dropout).
   - **Review:** Digest and Blog.
 - **Key Concepts:**
   - **Vectorization:** Bag of Words vs. TF-IDF.
@@ -22,7 +22,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews (Binary Sentiment).
   - **Demo:** **20 Newsgroups** (Multi-class Topic Classification: Sports, Tech, Politics, etc.).
-- **Data Source:** Hugging Face `datasets.load_dataset("imdb")`, `sklearn.datasets.fetch_20newsgroups()`.
+- **Data Source:** Hugging Face `datasets.load_dataset("stanfordnlp/imdb")`, `sklearn.datasets.fetch_20newsgroups()`.
 - **Tech Stack:** `scikit-learn`, `pandas`, `datasets`, `torch`.
 
 #### **Week 2: The Mechanics of Meaning (Tokenization)**
