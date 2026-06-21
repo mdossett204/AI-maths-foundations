@@ -11,7 +11,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Goal:** Establish a strong baseline. Understand how to turn text into numbers and the mechanics of classification (Weights & Gradients).
 - **Study Plan:**
   - **Day 1 – Vectorization** `classical-ML-vectorization.ipynb`: Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TfidfVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
-  - **Day 2–3 – Binary Classification & Training** `binary-classification-pytorch-vs-sklearn.ipynb`: The "Black Box" (Sklearn) vs. The "White Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, Decision Tree, Random Forest, Gradient Boosting classifier, SVM, and Simple NN.
+  - **Day 2–3 – Binary Classification & Training** `binary-classification-pytorch-vs-sklearn.ipynb`: The "Opaque Box" (Sklearn) vs. The "Clear Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, Decision Tree, Random Forest, Gradient Boosting classifier, SVM, and Simple NN.
   - **Day 4–5 – Multi-class Classification** `multiclass-classification-pytorch-vs-sklearn.ipynb`: Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression in PyTorch with MLP (hidden layer + ReLU + Dropout).
   - **Review:** Digest and Blog.
 - **Key Concepts:**
@@ -27,7 +27,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 #### **Week 2: The Mechanics of Meaning (Tokenization)**
 
-- **Goal:** Open the "black box" of tokenization.
+- **Goal:** Open the "opaque box" of tokenization.
 - **Study Plan:**
   - **Concepts:** Key concepts (Word, Char, Subword, Byte-level). Compare and contrast. Special tokens and multilingual issues.
   - **From Scratch:** Implementation of WordPiece and BPE algorithms **from scratch**.
@@ -35,10 +35,10 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Key Concepts:**
   - **The OOV Problem:** Why word-level splitting fails on complex languages.
   - **Byte-Level BPE:** How to handle any language (Chinese, Emoji) using bytes.
-  - **Implementation:** Writing a BPE algorithm **from scratch**.
+  - **Implementation:** Writing a WordPiece and BPE algorithm **from scratch**.
 - **Datasets:**
   - **Anchor:** IMDB (English).
-  - **Demo:** **Multilingual Corpus** (Chinese/Japanese snippets) to demonstrate byte fallback.
+  - **Demo:** **Multilingual Corpus** (Chinese/Emoji snippets) to demonstrate byte fallback.
 - **Data Source:** `datasets.load_dataset("imdb")`, manual snippets.
 - **Tech Stack:** Python, Hugging Face `tokenizers`.
 

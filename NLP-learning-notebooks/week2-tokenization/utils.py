@@ -51,7 +51,7 @@ def character_tokenizer(text:str) -> List[str]:
     """
     return list(text)
 
-def byte_level_tokenizer(text: str) -> List[str]:
+def byte_level_tokenizer(text: str) -> List[int]:
     """
     Return a list of UTF-8 bytes (0-255) representing the input text.
     This is the simplest byte-level tokenizer (no merges).
@@ -132,7 +132,7 @@ def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: boo
                 new_tokens.append(tokens[i])
                 i += 1
         tokens = new_tokens
-        if len(tokens) == 2: # one real token plus </w> 
+        if len(tokens) <= 1:
             break
 
     return [t for t in tokens if t != "</w>"]
