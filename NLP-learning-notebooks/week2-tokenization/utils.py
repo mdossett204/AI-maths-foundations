@@ -51,12 +51,26 @@ def character_tokenizer(text:str) -> List[str]:
     """
     return list(text)
 
-def byte_level_tokenizer(text: str) -> List[str]:
+def byte_level_tokenizer(text: str) -> List[int]:
     """
     Return a list of UTF-8 bytes (0-255) representing the input text.
     This is the simplest byte-level tokenizer (no merges).
     """
     return list(text.encode("utf-8"))
+
+def bytes_to_unicode():
+    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    cs = bs[:]
+    n = 0
+    for b in range(2**8):
+        if b not in bs:
+            bs.append(b)
+            cs.append(2**8+n)
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+BYTE_ENCODER = bytes_to_unicode()
 
 def train_bpe(
     corpus: List[str],
@@ -75,7 +89,7 @@ def train_bpe(
                 continue
             if byte_level:
                 # Use byte-level symbols for each word
-                symbols = [str(b) for b in byte_level_tokenizer(word)]
+                symbols = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)]
             else:
                 symbols = character_tokenizer(word)
             vocab[" ".join(symbols) + " </w>"] += 1
@@ -115,7 +129,7 @@ def train_bpe(
 
 def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
     if byte_level:
-        tokens = [str(b) for b in byte_level_tokenizer(word)] + ["</w>"]
+        tokens = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)] + ["</w>"]
     else:
         tokens = list(word) + ["</w>"]
     if not merges:
@@ -132,7 +146,7 @@ def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: boo
                 new_tokens.append(tokens[i])
                 i += 1
         tokens = new_tokens
-        if len(tokens) == 2: # one real token plus </w> 
+        if len(tokens) <= 1:
             break
 
     return [t for t in tokens if t != "</w>"]
