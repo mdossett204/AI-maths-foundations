@@ -3,7 +3,6 @@ import json
 from collections import Counter, defaultdict
 from typing import Callable, Dict, List, Tuple, Union
 import textwrap
-import numpy as np
 from copy import deepcopy
 import gc
 import matplotlib.pyplot as plt
@@ -29,25 +28,25 @@ def _as_long_tensor(x):
     return torch.as_tensor(x, dtype=torch.long)
 
 def save_torch_dataset(input_ids:List[List[int]], labels:List[int], 
-                       attention_masks:List[List[int]], file_name:str) -> None:
+                       padding_masks:List[List[int]], file_name:str) -> None:
     input_ids = _as_long_tensor(input_ids)
     labels = _as_long_tensor(labels)
-    attention_masks = _as_long_tensor(attention_masks)
+    padding_masks = _as_long_tensor(padding_masks)
 
     torch.save(
         {"input_ids": input_ids,
          "labels": labels,
-         "attention_mask":attention_masks,
+         "padding_mask":padding_masks,
          }, file_name
     )
 
 def load_torch_dataset(file_name:str) -> Tuple:
     data = torch.load(file_name, weights_only=True)
-    return data["input_ids"], data["labels"], data["attention_mask"]
+    return data["input_ids"], data["labels"], data["padding_mask"]
 
 
 def create_vocab_mapping(bpe_merges: List[Tuple[str,str]], pad_token:str="[PAD]") -> Dict[str,int]:
-    vocab_id_mapping = {str(i): i for i in range(256)}
+    vocab_id_mapping = {BYTE_ENCODER[i]: i for i in range(256)}
     current_id = 256
     for a, b in bpe_merges:
         token = a+b
@@ -60,12 +59,12 @@ def create_vocab_mapping(bpe_merges: List[Tuple[str,str]], pad_token:str="[PAD]"
 def convert_text_to_token_ids(text:str, bpe_merges: List[Tuple[str,str]], bpe_vocab: Dict[str,int], max_seq:int, pad_token:str="[PAD]") -> Tuple:
     tokenized_text = bpe_tokenizer(text, bpe_merges, byte_level=True)
     n = len(tokenized_text)
-    attention_mask = [1] * n if n <= max_seq else [1]*max_seq
+    padding_mask = [1] * n if n <= max_seq else [1]*max_seq
     if n < max_seq:
         tokenized_text.extend([pad_token for _ in range(max_seq-n)])
-        attention_mask.extend([0 for _ in range(max_seq-n)])
+        padding_mask.extend([0 for _ in range(max_seq-n)])
     token_ids = [bpe_vocab[token] for token in tokenized_text[:max_seq]]
-    return token_ids, attention_mask
+    return token_ids, padding_mask
 
 def get_imdb_corpus():
     """
@@ -108,6 +107,20 @@ def byte_level_tokenizer(text: str) -> List[int]:
     """
     return list(text.encode("utf-8"))
 
+def bytes_to_unicode():
+    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    cs = bs[:]
+    n = 0
+    for b in range(2**8):
+        if b not in bs:
+            bs.append(b)
+            cs.append(2**8+n)
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+BYTE_ENCODER = bytes_to_unicode()
+
 def train_bpe(
     corpus: List[str],
     vocab_size: int = 200,
@@ -126,7 +139,7 @@ def train_bpe(
                 continue
             if byte_level:
                 # Use byte-level symbols for each word
-                symbols = [str(b) for b in byte_level_tokenizer(word)]
+                symbols = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)]
             else:
                 symbols = character_tokenizer(word)
             vocab[" ".join(symbols) + " </w>"] += 1
@@ -168,7 +181,7 @@ def train_bpe(
 
 def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
     if byte_level:
-        tokens = [str(b) for b in byte_level_tokenizer(word)] + ["</w>"]
+        tokens = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)] + ["</w>"]
     else:
         tokens = list(word) + ["</w>"]
     if not merges:
@@ -317,7 +330,7 @@ def train_test_model(
         is_binary:bool=False) -> nn.Module:
     model.to(device)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=weight_decay)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=patience) 
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=3) 
     best_model_state = deepcopy(model.state_dict())
     lowest_loss = float("inf")
     counter = 0 
@@ -366,7 +379,7 @@ def bpe_batch_encode(sentences:List[str],
                      max_seq:int, 
                      pad_token:str ="[PAD]"):
     input_ids = []
-    attention_masks = []
+    padding_masks = []
     for text in sentences:
         token_ids, attn = convert_text_to_token_ids(
             text,
@@ -376,8 +389,8 @@ def bpe_batch_encode(sentences:List[str],
             pad_token=pad_token
         )
         input_ids.append(token_ids)
-        attention_masks.append(attn)
-    return torch.tensor(input_ids, dtype=torch.long), torch.tensor(attention_masks, dtype=torch.long)
+        padding_masks.append(attn)
+    return torch.tensor(input_ids, dtype=torch.long), torch.tensor(padding_masks, dtype=torch.long)
 
 
 def plot_heatmap(sim:torch.Tensor, title: str, labels: List[str]):
@@ -403,12 +416,12 @@ def plot_heatmap(sim:torch.Tensor, title: str, labels: List[str]):
 
 def get_dan_sent_embed(embedding_layer: nn.Module, 
                        input_ids: torch.tensor, 
-                       attention_mask: torch.tensor) -> torch.tensor:
+                       padding_mask: torch.tensor) -> torch.tensor:
     # input_ids: [B, S]
-    # attention_mask: [B, S]
+    # padding_mask: [B, S]
     with torch.no_grad():
         emb = embedding_layer(input_ids)                 # [B, S, D]
-        mask = attention_mask.unsqueeze(-1).float()      # [B, S, 1]
+        mask = padding_mask.unsqueeze(-1).float()      # [B, S, 1]
         masked = emb * mask
         sent_emb = masked.sum(dim=1) / mask.sum(dim=1).clamp(min=1)  # [B, D]
     return sent_emb
@@ -468,6 +481,6 @@ def print_embedding_result(
     )
     print(f"\n {model_type} semantic search:")
     for text, score in semantic_results:
-        print(f"{score:3f} | {text}")
+        print(f"{score:.3f} | {text}")
     
   

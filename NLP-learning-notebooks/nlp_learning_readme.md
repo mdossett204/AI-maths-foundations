@@ -10,9 +10,9 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 - **Goal:** Establish a strong baseline. Understand how to turn text into numbers and the mechanics of classification (Weights & Gradients).
 - **Study Plan:**
-  - **Day 1 – Vectorization** `classical-ML-vectorization.ipynb`: Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TfidfVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
-  - **Day 2–3 – Binary Classification & Training** `binary-classification-pytorch-vs-sklearn.ipynb`: The "Opaque Box" (Sklearn) vs. The "Clear Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, Decision Tree, Random Forest, Gradient Boosting classifier, SVM, and Simple NN.
-  - **Day 4–5 – Multi-class Classification** `multiclass-classification-pytorch-vs-sklearn.ipynb`: Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression in PyTorch with MLP (hidden layer + ReLU + Dropout).
+  - **Vectorization:** (`classical-ML-vectorization.ipynb`) Loading **IMDB**. Bag of Words (`CountVectorizer`) vs. TF-IDF (`TfidfVectorizer`). Converting Sparse Matrices to PyTorch Tensors.
+  - **Binary Classification & Training:** (`binary-classification-pytorch-vs-sklearn.ipynb`) The "Opaque Box" (Sklearn) vs. The "Clear Box" (PyTorch). Implementing the manual training loop (Forward, Loss, Backward) and comparing Logistic Regression, Decision Tree, Random Forest, Gradient Boosting classifier, SVM, and Simple NN.
+  - **Multi-class Classification:** (`multiclass-classification-pytorch-vs-sklearn.ipynb`) Loading **20 Newsgroups**. Naive Bayes & Logistic Regression (Sklearn) vs. Softmax Regression in PyTorch with MLP (hidden layer + ReLU + Dropout).
   - **Review:** Digest and Blog.
 - **Key Concepts:**
   - **Vectorization:** Bag of Words vs. TF-IDF.
@@ -50,18 +50,20 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 - **Goal:** Transition to dense, semantic vectors.
 - **Study Plan:**
-  - Tokenizer → IDs → padding/masks (use Week 2 tokenizer outputs).
-  - Train a simple embedding model (DAN: `Embedding → mean pool → MLP → classifier`).
-  - Briefly compare with pretrained word embeddings (mention SBERT only, defer depth).
-  - Real‑world usage: similarity search, clustering, retrieval foundations.
+  - **Tokenizer → IDs → Embedding Inputs:** Reuse Week 2 tokenizer outputs to build vocabulary, IDs, padding, and masks.
+  - **Train a Simple Embedding Model (DAN):** Build a Deep Averaging Network (`Embedding → mean pool → MLP → classifier`) for binary sentiment classification on IMDB.
+  - **Industry Embeddings comparison:** Compare the custom-trained DAN model with pre-trained word embeddings (GloVe) and sentence embeddings (SBERT) using semantic similarity search and heatmaps.
+  - **Real-World Embedding Uses (RAG):** Understand Retrieval-Augmented Generation, explore similarity metrics (Cosine, Euclidean, Jaccard, Dot Product), and perform semantic search.
 - **Key Concepts:**
-  - Embeddings: `King - Man + Woman = Queen`.
-  - The `nn.Embedding` layer in PyTorch.
-  - Deep Averaging Networks (DAN).
+  - **Embeddings:** Dense representations of text.
+  - **The `nn.Embedding` layer:** PyTorch implementation of embeddings.
+  - **Deep Averaging Networks (DAN):** Mean pooling for sequence representation.
+  - **Semantic Similarity Search:** Cosine similarity.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews.
-- **Data Source:** `datasets.load_dataset("imdb")`.
-- **Tech Stack:** `PyTorch`.
+  - **Demo:** Custom sentence snippets for semantic search comparisons.
+- **Data Source:** `datasets.load_dataset("imdb")`, pre-trained `glove.6B.300d` vectors.
+- **Tech Stack:** `torch`, `sentence-transformers`, `matplotlib`.
 
 #### **Week 4: Sequence Modeling (RNNs)**
 
