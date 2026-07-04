@@ -1,6 +1,5 @@
 torch
-tokenizers 
 datasets
-python-dotenv
-transformers
 sentence-transformers 
+jupyter
+matplotlib
