@@ -1,4 +1,4 @@
 torch
-datasets
 matplotlib
-python-dotenv
+pandas
+jupyter

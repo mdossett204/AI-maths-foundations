@@ -10,47 +10,10 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 
-def save_json(file_name: str, content: Union[Dict, List]) -> None:
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(content, f, indent=2)
-
-
 def load_json(file_name: str) -> Union[Dict, list]:
     with open(file_name, "r", encoding="utf-8") as f:
         content = json.load(f)
     return content
-
-
-def _as_long_tensor(x):
-    if isinstance(x, torch.Tensor):
-        return x.detach().clone().to(dtype=torch.long)
-    return torch.as_tensor(x, dtype=torch.long)
-
-
-def save_torch_dataset(
-    input_ids: List[List[int]],
-    labels: List[int],
-    padding_masks: List[List[int]],
-    file_name: str,
-) -> None:
-    input_ids = _as_long_tensor(input_ids)
-    labels = _as_long_tensor(labels)
-    padding_masks = _as_long_tensor(padding_masks)
-
-    torch.save(
-        {
-            "input_ids": input_ids,
-            "labels": labels,
-            "padding_mask": padding_masks,
-        },
-        file_name,
-    )
-
-
-def load_torch_dataset(file_name: str) -> Tuple:
-    data = torch.load(file_name, weights_only=True)
-    padding_mask = data.get("padding_mask", data.get("attention_mask"))
-    return data["input_ids"], data["labels"], padding_mask
 
 
 def word_tokenizer(text: str) -> List[str]:
@@ -61,9 +24,24 @@ def byte_level_tokenizer(text: str) -> List[int]:
     return list(text.encode("utf-8"))
 
 
+def bytes_to_unicode():
+    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    cs = bs[:]
+    n = 0
+    for b in range(2**8):
+        if b not in bs:
+            bs.append(b)
+            cs.append(2**8+n)
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+BYTE_ENCODER = bytes_to_unicode()
+
+
 def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
     if byte_level:
-        tokens = [str(b) for b in byte_level_tokenizer(word)] + ["</w>"]
+        tokens = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)] + ["</w>"]
     else:
         tokens = list(word) + ["</w>"]
 

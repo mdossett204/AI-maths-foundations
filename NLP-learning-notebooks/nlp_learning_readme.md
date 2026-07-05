@@ -69,16 +69,16 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 - **Goal:** Treat text as a sequence where order matters.
 - **Study Plan:**
-  - Load the saved Week 3 IMDb tokenized dataset, vocabulary config, and `DAN` weights as the Week 4 baseline setup.
-  - Revisit `DAN + linear classifier` as the order-agnostic embedding baseline.
+  - Load the saved Week 3 IMDb tokenized dataset, vocabulary config, and pre-trained `embedding_layer` weights to initialize the sequence models.
+  - Discuss why order-agnostic baselines (like DAN) can miss sequence information (negation, contrast, sentiment shifts).
   - Build a basic `RNN` sentiment classifier in PyTorch and use it to introduce hidden states over time.
   - Reuse the same sequence pipeline to implement `GRU` and `LSTM`, then compare gating, hidden states, and memory states.
   - Extend the recurrent setup to `BiLSTM` and compare unidirectional versus bidirectional context.
   - Create a small handwritten benchmark set focused on negation, contrast, sentiment shift, and scope.
-  - Compare all models on validation performance, benchmark accuracy, inference speed, parameter count, and failure cases.
+  - Compare the sequence models on validation performance, benchmark accuracy, inference speed, parameter count, and failure cases.
 - **Key Concepts:**
   - Why sequence order matters beyond bag-of-words style features.
-  - Order-agnostic embedding baseline: `DAN + linear classifier`.
+  - Transfer learning basics: re-using a pre-trained embedding layer.
   - Recurrence (`RNN`) vs. gating (`LSTM` / `GRU`).
   - Hidden states, memory states, sequence length, and vanishing gradients.
   - Bidirectionality.

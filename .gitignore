@@ -215,7 +215,7 @@ __marimo__/
 
 #models 
 *.npy
-*models*
+models/
 *.pth
 *.zip
 *checkpoints*
