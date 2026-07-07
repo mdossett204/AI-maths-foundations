@@ -1,8 +1,0 @@
-{
-  "pad_token": "[PAD]",
-  "pad_id": 589,
-  "byte_vocab_size": 256,
-  "max_seq": 128,
-  "num_merges": 333,
-  "vocab_size": 590
-}
