@@ -198,7 +198,7 @@ def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: boo
                 new_tokens.append(tokens[i])
                 i += 1
         tokens = new_tokens
-        if len(tokens) == 2: # one real token plus </w> 
+        if len(tokens) <= 1: # one real token plus </w> 
             break
 
     return [t for t in tokens if t != "</w>"]
