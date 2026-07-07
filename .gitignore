@@ -221,3 +221,4 @@ models/
 *checkpoints*
 *runs*
 *.tsv
+**/models/
