@@ -85,7 +85,7 @@ def _apply_bpe_to_word(
                 new_tokens.append(tokens[i])
                 i += 1
         tokens = new_tokens
-        if len(tokens) == 2:
+        if len(tokens) <= 1:
             break
 
     return [token for token in tokens if token != "</w>"]

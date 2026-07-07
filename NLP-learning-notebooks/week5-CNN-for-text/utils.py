@@ -62,7 +62,7 @@ def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: boo
                 new_tokens.append(tokens[i])
                 i += 1
         tokens = new_tokens
-        if len(tokens) == 2:
+        if len(tokens) <= 1:
             break
 
     return [token for token in tokens if token != "</w>"]
@@ -282,7 +282,7 @@ def train_test_model(
     model.to(device)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=patience
+        optimizer, mode="min", factor=0.5, patience=3
     )
     best_model_state = deepcopy(model.state_dict())
     lowest_loss = float("inf")
