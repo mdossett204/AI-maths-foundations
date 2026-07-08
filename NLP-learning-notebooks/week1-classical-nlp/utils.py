@@ -295,7 +295,7 @@ def train_test_model(
         is_binary:bool=False) -> nn.Module:
     model.to(device)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=l2)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5) 
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=3) 
     best_model_state = deepcopy(model.state_dict())
     lowest_loss = float("inf")
     counter = 0 
