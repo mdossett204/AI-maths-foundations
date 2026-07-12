@@ -11,27 +11,10 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 
-def save_json(file_name: str, content: Union[Dict, List]) -> None:
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(content, f, indent=2)
-
-
 def load_json(file_name: str) -> Union[Dict, list]:
     with open(file_name, "r", encoding="utf-8") as f:
         content = json.load(f)
     return content
-
-
-def _as_long_tensor(x):
-    if isinstance(x, torch.Tensor):
-        return x.detach().clone().to(dtype=torch.long)
-    return torch.as_tensor(x, dtype=torch.long)
-
-
-def load_torch_dataset(file_name: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    data = torch.load(file_name, weights_only=True)
-    padding_mask = data.get("padding_mask", data.get("attention_mask"))
-    return data["input_ids"], data["labels"], padding_mask
 
 
 def word_tokenizer(text: str) -> List[str]:
@@ -42,9 +25,24 @@ def byte_level_tokenizer(text: str) -> List[int]:
     return list(text.encode("utf-8"))
 
 
+def bytes_to_unicode():
+    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    cs = bs[:]
+    n = 0
+    for b in range(2**8):
+        if b not in bs:
+            bs.append(b)
+            cs.append(2**8+n)
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+BYTE_ENCODER = bytes_to_unicode()
+
+
 def _apply_bpe_to_word(word: str, merges: List[Tuple[str, str]], byte_level: bool = False) -> List[str]:
     if byte_level:
-        tokens = [str(b) for b in byte_level_tokenizer(word)] + ["</w>"]
+        tokens = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)] + ["</w>"]
     else:
         tokens = list(word) + ["</w>"]
 
@@ -341,21 +339,19 @@ def train_test_model(
     return model
 
 
-def load_pretrained_embedding(model: nn.Module, state_path: str, key: str = "embedding.weight") -> None:
+def load_pretrained_embedding(model: nn.Module, state_path: str) -> None:
     device = model.embedding.weight.device
     state = torch.load(state_path, map_location=device)
-    if key not in state:
-        raise KeyError(f"Could not find '{key}' in {state_path}")
-    model.embedding.weight.data.copy_(state[key])
+    model.embedding.weight.data.copy_(state["weight"])
 
 
-def build_conv_mask(attention_mask: torch.Tensor, kernel_size: int) -> torch.Tensor:
+def build_conv_mask(padding_mask: torch.Tensor, kernel_size: int) -> torch.Tensor:
     """
     Mark which sliding-window positions are fully inside the real (non-pad) part
     of the sequence.
 
     Example:
-    - attention mask: [1, 1, 1, 0, 0]
+    - padding mask: [1, 1, 1, 0, 0]
     - kernel size: 2
     - valid windows:  [1, 1, 0, 0]
 
@@ -363,16 +359,9 @@ def build_conv_mask(attention_mask: torch.Tensor, kernel_size: int) -> torch.Ten
     padding tokens.
     """
     window_mass = F.avg_pool1d(
-        attention_mask.float().unsqueeze(1), kernel_size=kernel_size, stride=1
+        padding_mask.float().unsqueeze(1), kernel_size=kernel_size, stride=1
     ).squeeze(1)
     return window_mass == 1.0
-
-
-def predict_probabilities(model: nn.Module, input_ids: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    model.eval()
-    with torch.no_grad():
-        logits = model(input_ids, mask)
-        return torch.sigmoid(logits).squeeze(-1)
 
 
 def plot_feature_map_heatmap(
