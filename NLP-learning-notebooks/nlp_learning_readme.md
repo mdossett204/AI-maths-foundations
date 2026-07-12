@@ -69,7 +69,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 - **Goal:** Treat text as a sequence where order matters.
 - **Study Plan:**
-  - Load the saved Week 3 IMDb tokenized dataset, vocabulary config, and pre-trained `embedding_layer` weights to initialize the sequence models.
+  - Load the saved Week 3 IMDb tokenized dataset, vocabulary config, and pre-trained `embedding_layer` weights to initialize the sequence models (directly reusing the train, validation, and test dataset splits generated in Week 3).
   - Discuss why order-agnostic baselines (like DAN) can miss sequence information (negation, contrast, sentiment shifts).
   - Build a basic `RNN` sentiment classifier in PyTorch and use it to introduce hidden states over time.
   - Reuse the same sequence pipeline to implement `GRU` and `LSTM`, then compare gating, hidden states, and memory states.
@@ -88,7 +88,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews.
   - **Demo:** IMDb-trained models evaluated on a small custom benchmark set covering negation, contrast, sentiment shift, and scope.
-- **Data Source:** `datasets.load_dataset("imdb")`, manual challenge examples.
+- **Data Source:** Saved Week 3 IMDb tokenized dataset splits and vocabulary, plus manual challenge examples.
 - **Tech Stack:** `PyTorch`.
 
 #### **Week 5: Spatial Features in Text (CNNs)**
@@ -96,17 +96,17 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Goal:** Using Convolutions for text.
 - **Core Concepts:**
   - 1D convolutions as learned sliding-window feature detectors over text.
-  - Multiple filters/channels at kernel sizes `2`, `3`, and `4` learning different local phrase patterns.
+  - Multiple filters/channels at kernel sizes `6`, `10`, and `16` learning different local phrase patterns.
   - Parameter sharing across positions, so the same learned detector can fire anywhere in a review.
   - Global max pooling versus mean pooling, with emphasis on why max pooling often preserves strong sentiment evidence better.
   - `TextCNN`: `Embedding -> Conv1d -> ReLU -> Global Pool -> Linear`, using the saved IMDb tokenization pipeline and the learned `DAN` embedding from Week 3 as initialization.
-  - Training on IMDb using the same split setup as Week 4 for consistency.
+  - Training on IMDb directly reusing the train, validation, and test dataset splits generated in Week 3 for consistency.
   - Inspecting learned feature maps and pooling behavior on a small handwritten challenge set targeting negation, intensifiers, and phrase relocation.
   - CNN strengths for local phrase detection and efficient parallel computation, plus a short conceptual contrast with RNNs.
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews.
   - **Demo:** IMDb-trained CNN evaluated on a small custom challenge set targeting local phrase phenomena.
-- **Data Source:** Saved Week 3/Week 4 IMDb tokenized assets, plus manual challenge examples.
+- **Data Source:** Saved Week 3 IMDb tokenized dataset splits and vocabulary, plus manual challenge examples.
 - **Tech Stack:** `PyTorch`.
 
 ---
@@ -138,7 +138,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Datasets:**
   - **Anchor:** IMDB Movie Reviews.
   - **Demo:** Small handwritten paired-text attention set for cross-attention probes such as review snippet + query.
-- **Data Source:** Saved Week 4/Week 5 IMDb tokenized assets, plus manual toy paired-text examples.
+- **Data Source:** Saved Week 3 IMDb tokenized dataset splits, plus manual toy paired-text examples.
 - **Tech Stack:** `PyTorch`, `matplotlib`.
 
 #### **Week 7: Transfer Learning (BERT & SBERT)**
