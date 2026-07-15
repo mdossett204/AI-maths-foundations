@@ -13,20 +13,9 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 
-def save_json(file_name: str, content: Union[Dict, List]) -> None:
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(content, f, indent=2)
-
-
 def load_json(file_name: str) -> Union[Dict, List]:
     with open(file_name, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def load_torch_dataset(file_name: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    data = torch.load(file_name, weights_only=True)
-    padding_mask = data.get("padding_mask", data.get("attention_mask"))
-    return data["input_ids"], data["labels"], padding_mask
 
 
 def clean_memory(vars_to_delete: list = None, scope: dict = None, verbose: bool = True):
@@ -61,13 +50,32 @@ def byte_level_tokenizer(text: str) -> List[int]:
     return list(text.encode("utf-8"))
 
 
+def bytes_to_unicode():
+    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    cs = bs[:]
+    n = 0
+    for b in range(2**8):
+        if b not in bs:
+            bs.append(b)
+            cs.append(2**8+n)
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+BYTE_ENCODER = bytes_to_unicode()
+
+
 def _apply_bpe_to_word(
     word: str,
     merges: List[Tuple[str, str]],
     byte_level: bool = False,
 ) -> List[str]:
+    """
+    Note: This byte-level BPE with explicit </w> markers is a simplified teaching hybrid. 
+    True GPT-2 byte-level BPE encodes leading spaces and does not use explicit </w> tokens.
+    """
     if byte_level:
-        tokens = [str(byte) for byte in byte_level_tokenizer(word)] + ["</w>"]
+        tokens = [BYTE_ENCODER[b] for b in byte_level_tokenizer(word)] + ["</w>"]
     else:
         tokens = list(word) + ["</w>"]
 
@@ -108,12 +116,16 @@ def encode_bpe_sequence(
     bpe_vocab: Dict[str, int],
     max_len: int,
     pad_token: str = "[PAD]",
+    unk_token: str = "[UNK]",
     byte_level: bool = True,
 ) -> Tuple[List[int], List[int], List[str]]:
     tokens = bpe_tokenizer(text, bpe_merges, byte_level=byte_level)[:max_len]
-    ids = [bpe_vocab[token] for token in tokens]
-    mask = [1] * len(ids)
+    
     pad_id = bpe_vocab[pad_token]
+    unk_id = bpe_vocab.get(unk_token, pad_id)
+    ids = [bpe_vocab.get(token, unk_id) for token in tokens]
+    
+    mask = [1] * len(ids)
 
     if len(ids) < max_len:
         pad_size = max_len - len(ids)
@@ -130,6 +142,7 @@ def bpe_batch_encode(
     bpe_vocab: Dict[str, int],
     max_len: int,
     pad_token: str = "[PAD]",
+    unk_token: str = "[UNK]",
     byte_level: bool = True,
 ) -> Tuple[torch.Tensor, torch.Tensor, List[List[str]]]:
     all_ids = []
@@ -142,6 +155,7 @@ def bpe_batch_encode(
             bpe_vocab=bpe_vocab,
             max_len=max_len,
             pad_token=pad_token,
+            unk_token=unk_token,
             byte_level=byte_level,
         )
         all_ids.append(ids)
@@ -311,6 +325,9 @@ class MultiHeadAttention(nn.Module):
         value = _split_heads(self.v_proj(context), self.num_heads)
 
         if self.use_rope:
+            # Note: For teaching simplicity, the RoPE cache is rebuilt on every forward pass here.
+            # In a production setting, this is computationally wasteful. It should be precomputed once
+            # (e.g., as a buffer sized to max_seq_len) and sliced per batch, similar to absolute PE.
             q_cos, q_sin = build_rope_cache(
                 seq_len=query.size(-2),
                 head_dim=self.head_dim,
@@ -679,7 +696,6 @@ def train_binary_classifier(
 
             total_loss += loss.item()
             total_correct += get_correct_predictions(logits, labels)
-
         train_loss = total_loss / len(train_loader)
         train_acc = total_correct / total_train_size
         val_loss, val_acc = evaluate_binary_classifier(model, val_loader, criterion, device)
