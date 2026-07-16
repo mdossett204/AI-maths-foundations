@@ -194,7 +194,7 @@ def rotate_half(x: torch.Tensor) -> torch.Tensor:
     return rotated.flatten(start_dim=-2)
 
 
-def build_rope_cache(
+def build_rope(
     seq_len: int,
     head_dim: int,
     device: Optional[torch.device] = None,
@@ -328,12 +328,12 @@ class MultiHeadAttention(nn.Module):
             # Note: For teaching simplicity, the RoPE cache is rebuilt on every forward pass here.
             # In a production setting, this is computationally wasteful. It should be precomputed once
             # (e.g., as a buffer sized to max_seq_len) and sliced per batch, similar to absolute PE.
-            q_cos, q_sin = build_rope_cache(
+            q_cos, q_sin = build_rope(
                 seq_len=query.size(-2),
                 head_dim=self.head_dim,
                 device=query.device,
             )
-            k_cos, k_sin = build_rope_cache(
+            k_cos, k_sin = build_rope(
                 seq_len=key.size(-2),
                 head_dim=self.head_dim,
                 device=key.device,
