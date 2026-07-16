@@ -325,7 +325,7 @@ class MultiHeadAttention(nn.Module):
         value = _split_heads(self.v_proj(context), self.num_heads)
 
         if self.use_rope:
-            # Note: For teaching simplicity, the RoPE cache is rebuilt on every forward pass here.
+            # Note: For teaching simplicity, the RoPE frequencies are rebuilt on every forward pass here.
             # In a production setting, this is computationally wasteful. It should be precomputed once
             # (e.g., as a buffer sized to max_seq_len) and sliced per batch, similar to absolute PE.
             q_cos, q_sin = build_rope(
