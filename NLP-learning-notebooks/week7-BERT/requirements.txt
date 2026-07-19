@@ -1,10 +1,10 @@
 torch
-matplotlib
 transformers
 datasets
 evaluate
 accelerate         
 sentence-transformers
 scipy
-scikit-learn
 numpy
+matplotlib
+jupyter
