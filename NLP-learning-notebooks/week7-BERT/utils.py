@@ -2,32 +2,17 @@ import gc
 import json
 import math
 import re
-from copy import deepcopy
-from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple, Union
-import numpy as np
+from typing import Dict,  List, Optional, Tuple, Union
 
-import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import DataLoader
 
 
-def save_json(file_name: str, content: Union[Dict, List]) -> None:
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(content, f, indent=2)
-
-
 def load_json(file_name: str) -> Union[Dict, List]:
     with open(file_name, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def load_torch_dataset(file_name: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    data = torch.load(file_name, weights_only=True)
-    padding_mask = data.get("padding_mask", data.get("attention_mask"))
-    return data["input_ids"], data["labels"], padding_mask
 
 
 def clean_memory(vars_to_delete: list = None, scope: dict = None, verbose: bool = True):
@@ -62,13 +47,31 @@ def byte_level_tokenizer(text: str) -> List[int]:
     return list(text.encode("utf-8"))
 
 
+def bytes_to_unicode():
+    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    cs = bs[:]
+    n = 0
+    for b in range(2**8):
+        if b not in bs:
+            bs.append(b)
+            cs.append(2**8+n)
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+BYTE_ENCODER = bytes_to_unicode()
+
 def _apply_bpe_to_word(
     word: str,
     merges: List[Tuple[str, str]],
     byte_level: bool = False,
 ) -> List[str]:
+    """
+    Note: This byte-level BPE with explicit </w> markers is a simplified teaching hybrid. 
+    True GPT-2 byte-level BPE encodes leading spaces and does not use explicit </w> tokens.
+    """
     if byte_level:
-        tokens = [str(byte) for byte in byte_level_tokenizer(word)] + ["</w>"]
+        tokens = [BYTE_ENCODER[byte] for byte in byte_level_tokenizer(word)] + ["</w>"]
     else:
         tokens = list(word) + ["</w>"]
 
@@ -180,8 +183,7 @@ def rotate_half(x: torch.Tensor) -> torch.Tensor:
     rotated = torch.stack((-x_odd, x_even), dim=-1)
     return rotated.flatten(start_dim=-2)
 
-
-def build_rope_cache(
+def build_rope(
     seq_len: int,
     head_dim: int,
     device: Optional[torch.device] = None,
@@ -189,7 +191,7 @@ def build_rope_cache(
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     if head_dim % 2 != 0:
         raise ValueError("head_dim must be even to apply rotary embeddings.")
-
+    
     positions = torch.arange(seq_len, dtype=torch.float32, device=device)
     inv_freq = 1.0 / (
         base
@@ -312,12 +314,13 @@ class MultiHeadAttention(nn.Module):
         value = _split_heads(self.v_proj(context), self.num_heads)
 
         if self.use_rope:
-            q_cos, q_sin = build_rope_cache(
+            q_cos, q_sin = build_rope(
                 seq_len=query.size(-2),
                 head_dim=self.head_dim,
                 device=query.device,
             )
-            k_cos, k_sin = build_rope_cache(
+
+            k_cos, k_sin = build_rope(
                 seq_len=key.size(-2),
                 head_dim=self.head_dim,
                 device=key.device,
@@ -638,22 +641,28 @@ class TinySBERT(nn.Module):
     def __init__(self, bert_model: nn.Module):
         super().__init__()
         self.bert = bert_model
+    
+    def encode(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        """Encode a batch of sentences to a fixed size embeddings via mean pooling."""
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        token_states = outputs.last_hidden_state #[batch, seq_len, embed_dim]
+        return masked_mean_pool(token_states, attention_mask)
+    
+    def similarity(self, emb_a: torch.Tensor, emb_b: torch.Tensor) -> torch.Tensor:
+        """Cosine similiarty between two batches of embeddings."""
+        return nn.functional.cosine_similarity(emb_a, emb_b, dim=1)
 
     def forward(
         self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
+        input_ids_a: torch.Tensor,
+        attention_mask_a: torch.Tensor,
+        input_ids_b: torch.Tensor,
+        attention_mask_b: torch.Tensor,
     ) -> torch.Tensor:
-        token_embeddings = self.bert(input_ids, attention_mask)
-        if isinstance(token_embeddings, tuple):
-            token_embeddings = token_embeddings[0]
-
-        # Mean pooling to get sentence embeddings
-        sentence_embeddings = masked_mean_pool(token_embeddings, attention_mask)
-        
-        # L2 Normalization
-        sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
-        return sentence_embeddings
+        """Return cosine similarity scores for a batch of sentence pairs."""
+        emb_a = self.encode(input_ids_a, attention_mask_a)
+        emb_b = self.encode(input_ids_b, attention_mask_b)
+        return self.similarity(emb_a, emb_b)
 
 
 def create_bert(**kwargs) -> TinyBERT:
@@ -704,230 +713,11 @@ def evaluate_binary_classifier(
     return total_loss / len(data_loader), total_correct / total_size
 
 
-def check_early_stop(
-    patience: int,
-    val_loss: float,
-    model: nn.Module,
-    best_model_state: Dict,
-    lowest_loss: float,
-    counter: int,
-) -> Tuple[Dict, float, int, bool]:
-    early_stop = False
-    if val_loss < lowest_loss:
-        lowest_loss = val_loss
-        best_model_state = deepcopy(model.state_dict())
-        counter = 0
-    else:
-        counter += 1
-
-    if counter >= patience:
-        early_stop = True
-
-    return best_model_state, lowest_loss, counter, early_stop
-
-
-def plot_training_history(
-    train_losses: List[float],
-    val_losses: List[float],
-    train_accs: List[float],
-    val_accs: List[float],
-) -> None:
-    epochs = range(1, len(train_losses) + 1)
-    plt.figure(figsize=(12, 5))
-
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, train_losses, label="Train Loss")
-    plt.plot(epochs, val_losses, label="Val Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.title("Training vs Validation Loss")
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, train_accs, label="Train Accuracy")
-    plt.plot(epochs, val_accs, label="Val Accuracy")
-    plt.xlabel("Epoch")
-    plt.ylabel("Accuracy")
-    plt.title("Training vs Validation Accuracy")
-    plt.legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
-def train_binary_classifier(
-    model: nn.Module,
-    train_loader: DataLoader,
-    val_loader: DataLoader,
-    device: torch.device,
-    num_epochs: int = 4,
-    lr: float = 3e-4,
-    weight_decay: float = 1e-4,
-    patience: int = 2,
-    save_model_path: Optional[Union[str, Path]] = None,
-) -> nn.Module:
-    model.to(device)
-    if save_model_path is not None:
-        save_model_path = Path(save_model_path)
-        save_model_path.parent.mkdir(parents=True, exist_ok=True)
-
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-
-    best_model_state = deepcopy(model.state_dict())
-    lowest_loss = float("inf")
-    counter = 0
-    train_losses = []
-    train_accs = []
-    val_losses = []
-    val_accs = []
-
-    total_train_size = len(train_loader.dataset)
-
-    for epoch in range(num_epochs):
-        model.train()
-        total_loss = 0.0
-        total_correct = 0.0
-
-        for input_ids, attention_mask, labels in train_loader:
-            input_ids = input_ids.to(device)
-            attention_mask = attention_mask.to(device)
-            labels = labels.unsqueeze(-1).to(device)
-
-            optimizer.zero_grad()
-            logits = model(input_ids, attention_mask)
-            loss = criterion(logits, labels)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            optimizer.step()
-
-            total_loss += loss.item()
-            total_correct += get_correct_predictions(logits, labels)
-
-        train_loss = total_loss / len(train_loader)
-        train_acc = total_correct / total_train_size
-        val_loss, val_acc = evaluate_binary_classifier(model, val_loader, criterion, device)
-
-        train_losses.append(train_loss)
-        train_accs.append(train_acc)
-        val_losses.append(val_loss)
-        val_accs.append(val_acc)
-
-        previous_lowest_loss = lowest_loss
-        best_model_state, lowest_loss, counter, early_stop = check_early_stop(
-            patience=patience,
-            val_loss=val_loss,
-            model=model,
-            best_model_state=best_model_state,
-            lowest_loss=lowest_loss,
-            counter=counter,
-        )
-        if save_model_path is not None and lowest_loss < previous_lowest_loss:
-            torch.save(best_model_state, save_model_path)
-            print(f"Saved best model state to {save_model_path}")
-
-        print(
-            f"Epoch {epoch + 1:02d} | "
-            f"train_loss={train_loss:.4f} val_loss={val_loss:.4f} | "
-            f"train_acc={train_acc:.4f} val_acc={val_acc:.4f}"
-        )
-
-        if early_stop:
-            print(f"Early stopping at epoch {epoch + 1}")
-            break
-
-    model.load_state_dict(best_model_state)
-
-    plot_training_history(train_losses, val_losses, train_accs, val_accs)
-    return model
-
-
-def _render_attention_matrix(
-    matrix: torch.Tensor,
-    query_tokens: List[str],
-    key_tokens: List[str],
-    title: str,
-    cmap: str,
-    ax: Optional[plt.Axes] = None,
-    show_colorbar: bool = True,
-) -> None:
-    if ax is None:
-        ax = plt.gca()
-    im = ax.imshow(matrix, aspect="auto", cmap=cmap)
-    ax.set_xticks(range(len(key_tokens)))
-    ax.set_xticklabels(key_tokens, rotation=45, ha="right")
-    ax.set_yticks(range(len(query_tokens)))
-    ax.set_yticklabels(query_tokens)
-    ax.set_xlabel("Key / Value tokens")
-    ax.set_ylabel("Query tokens")
-    ax.set_title(title)
-    if show_colorbar:
-        ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Attention weight")
-
-
-def plot_attention_heatmap(
-    attention: torch.Tensor,
-    query_tokens: List[str],
-    key_tokens: Optional[List[str]] = None,
-    title: str = "",
-    head: int = 0,
-    batch_idx: int = 0,
-    cmap: str = "magma",
-) -> None:
-    if attention.dim() != 4:
-        raise ValueError("attention must have shape [batch, heads, query_len, key_len].")
-
-    matrix = attention[batch_idx, head].detach().cpu()
-    key_tokens = query_tokens if key_tokens is None else key_tokens
-
-    plt.figure(figsize=(max(6, 0.6 * len(key_tokens)), max(4, 0.5 * len(query_tokens))))
-    _render_attention_matrix(
-        matrix=matrix,
-        query_tokens=query_tokens,
-        key_tokens=key_tokens,
-        title=title or f"Attention heatmap (batch {batch_idx}, head {head})",
-        cmap=cmap,
-    )
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_attention_heads(
-    attention: torch.Tensor,
-    query_tokens: List[str],
-    key_tokens: Optional[List[str]] = None,
-    max_heads: int = 4,
-    batch_idx: int = 0,
-    cmap: str = "magma",
-) -> None:
-    if attention.dim() != 4:
-        raise ValueError("attention must have shape [batch, heads, query_len, key_len].")
-
-    key_tokens = query_tokens if key_tokens is None else key_tokens
-    num_heads = min(attention.size(1), max_heads)
-    fig, axes = plt.subplots(1, num_heads, figsize=(5 * num_heads, max(4, 0.45 * len(query_tokens))))
-    if num_heads == 1:
-        axes = [axes]
-
-    for head_idx in range(num_heads):
-        matrix = attention[batch_idx, head_idx].detach().cpu()
-        _render_attention_matrix(
-            matrix=matrix,
-            query_tokens=query_tokens,
-            key_tokens=key_tokens,
-            title=f"Head {head_idx}",
-            cmap=cmap,
-            ax=axes[head_idx],
-        )
-
-    plt.tight_layout()
-    plt.show()
-
 def linear_cka(X: torch.Tensor, Y: torch.Tensor) -> float:
     """Linear CKA between two representation matrices [n, d]."""
     X = X - X.mean(0, keepdim=True)
     Y = Y - Y.mean(0, keepdim=True)
-    gram_xy = (X @ Y.T).norm("fro") ** 2
-    gram_xx = (X @ X.T).norm("fro")
-    gram_yy = (Y @ Y.T).norm("fro")
+    gram_xy = (Y.T @ X).norm("fro") ** 2
+    gram_xx = (X.T @ X).norm("fro")
+    gram_yy = (Y.T @ Y).norm("fro")
     return (gram_xy / (gram_xx * gram_yy + 1e-8)).item()

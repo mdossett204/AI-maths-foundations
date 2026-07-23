@@ -145,7 +145,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 
 - **Goal:** Extend the Transformer architecture to build an encoder, and explore BERT and Sentence-BERT (SBERT) for transfer learning.
 - **Study Plan:**
-  - **Building an Encoder:** Extend Week 6's Transformer block into a full Encoder architecture. Understand how multiple layers stack to build deep contextual representations.
+  - **Building an Encoder & Layer Probing:** Extend Week 6's Transformer block into a full Encoder architecture. Probe layer similarities using CKA to visualize the impact of residual connections in an untrained network vs. the "staircase" pattern in a pre-trained network.
   - **BERT Architecture & Pre-training:** Introduce BERT (Bidirectional Encoder Representations from Transformers). Explore its Masked Language Modeling (MLM) and Next Sentence Prediction (NSP) objectives.
   - **Fine-tuning BERT:** Hands-on with fine-tuning a pre-trained BERT model for a classification task using the Hugging Face `Trainer` API.
   - **Sentence-BERT - SBERT:** Introduce SBERT and Siamese networks. Understand why standard BERT is slow for semantic similarity and how SBERT solves this by producing sentence embeddings.
@@ -158,8 +158,8 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - Semantic Similarity and Retrieval.
 - **Datasets:**
   - **Anchor:** IMDB (Classification).
-  - **Demo:** STS (Semantic Textual Similarity) dataset for SBERT.
-- **Data Source:** Hugging Face `datasets`.
+  - **Demo:** Small synthetic STS (Semantic Textual Similarity) benchmark for SBERT evaluation.
+- **Data Source:** Saved Week 3 IMDb tokenized dataset splits, plus manual STS examples.
 - **Tech Stack:** `PyTorch`, Hugging Face `transformers`, `sentence-transformers`.
 
 #### **Week 8: Decoder-Only Generation (GPT)**
