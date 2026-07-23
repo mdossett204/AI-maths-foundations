@@ -158,7 +158,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - Semantic Similarity and Retrieval.
 - **Datasets:**
   - **Anchor:** IMDB (Classification).
-  - **Demo:** Small handwritten STS (Semantic Textual Similarity) benchmark for SBERT evaluation.
+  - **Demo:** Small synthetic STS (Semantic Textual Similarity) benchmark for SBERT evaluation.
 - **Data Source:** Saved Week 3 IMDb tokenized dataset splits, plus manual STS examples.
 - **Tech Stack:** `PyTorch`, Hugging Face `transformers`, `sentence-transformers`.
 
