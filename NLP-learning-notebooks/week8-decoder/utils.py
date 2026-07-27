@@ -273,7 +273,6 @@ def evaluate_tiny_gpt(
 ) -> torch.Tensor:
     model.eval()
     input_ids = input_ids.clone()
-    model.eval()
     with torch.no_grad():
         for _ in range(max_new_tokens):
             idx_condition = input_ids[:, -max_seq_len:]
