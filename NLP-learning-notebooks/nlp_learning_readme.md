@@ -171,9 +171,9 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - Build a tiny decoder-only Transformer in pure PyTorch to make the architecture concrete.
   - Implement token embeddings, positional embeddings, stacked Transformer blocks, a causal self-attention mask, and an LM head.
   - Train the tiny model on a self-contained character-level text snippet with next-token prediction loss.
-  - Move to Hugging Face `transformers` and fine-tune `distilgpt2` with CPU-friendly defaults.
-  - Tokenize and group WikiText into fixed-length causal language modeling blocks.
-  - Configure `Trainer` with small batches, gradient accumulation, short sequence length, step-based evaluation, and checkpointing.
+  - Move to Hugging Face `transformers` and fine-tune `distilgpt2` with MPS friendly defaults.
+  - Tokenize and group WikiText into fixed length causal language modeling blocks.
+  - Configure `Trainer` with small batches, gradient accumulation, short sequence length, step based evaluation, and checkpointing.
   - Run a generation demo from a prompt before or after fine-tuning.
 - **Key Concepts:**
   - Decoder-only Transformer architecture.
@@ -186,7 +186,7 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - **Fine-tuning Demo:** **WikiText-2** for causal language modeling.
   - **Anchor:** **WikiText-2** for causal language modeling.
   - **Demo:** Small character-level text snippet (Scratch Demo).
-- **Data Source:** In-notebook toy text, `datasets.load_dataset("wikitext", "wikitext-2-v1")`.
+- **Data Source:** In-notebook toy text, `datasets.load_dataset("Salesforce/wikitext", "wikitext-2-v1")`.
 - **Tech Stack:** `PyTorch`, Hugging Face `datasets`, Hugging Face `transformers`.
 
 #### **Week 9: Encoder-Decoder Generation (T5)**
