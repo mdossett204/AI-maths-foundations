@@ -273,13 +273,14 @@ def evaluate_tiny_gpt(
 ) -> torch.Tensor:
     model.eval()
     input_ids = input_ids.clone()
-    for _ in range(max_new_tokens):
-        idx_condition = input_ids[:, -max_seq_len:]
-        logits = model(idx_condition)
-        logits = logits[:, -1, :]/max(temperature, 1e-6)
-        probs = F.softmax(logits, dim=-1)
-        next_idx = torch.multinomial(probs, num_samples=1)
-        input_ids = torch.cat([input_ids, next_idx], dim=1)
+    with torch.no_grad():
+        for _ in range(max_new_tokens):
+            idx_condition = input_ids[:, -max_seq_len:]
+            logits = model(idx_condition)
+            logits = logits[:, -1, :]/max(temperature, 1e-6)
+            probs = F.softmax(logits, dim=-1)
+            next_idx = torch.multinomial(probs, num_samples=1)
+            input_ids = torch.cat([input_ids, next_idx], dim=1)
     return input_ids
    
 
@@ -302,7 +303,7 @@ def train_tiny_gpt(
     lowest_loss = float("inf")
     for epoch in range(epochs):
         for x, y in train_loader:
-            x, y = x.to(device),  y.to(device)
+            x, y = x.to(device), y.to(device)
             logits = model(x)
             loss = criterion(logits.reshape(-1, logits.size(-1)), y.reshape(-1))
             optimizer.zero_grad(set_to_none=True)
@@ -315,7 +316,7 @@ def train_tiny_gpt(
                 if save_model_path is not None:
                     torch.save(best_model_state, save_model_path)
                     print(f"Saved best model state to {save_model_path}")
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             print(f"epoch {epoch+1} | loss {loss.item():.4f}")
             
     model.load_state_dict(best_model_state)

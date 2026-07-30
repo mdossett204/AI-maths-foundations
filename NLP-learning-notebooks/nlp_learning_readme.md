@@ -167,14 +167,17 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 - **Notebook:** `week8-decoder/Week_8_GPT.ipynb`
 - **Goal:** Understand GPT-style causal language modeling, then fine-tune a small pretrained decoder-only model for text completion.
 - **Study Plan:**
-  - Set up reproducible PyTorch training with CPU, MPS, or CUDA device detection.
-  - Build a tiny decoder-only Transformer in pure PyTorch to make the architecture concrete.
-  - Implement token embeddings, positional embeddings, stacked Transformer blocks, a causal self-attention mask, and an LM head.
-  - Train the tiny model on a self-contained character-level text snippet with next-token prediction loss.
-  - Move to Hugging Face `transformers` and fine-tune `distilgpt2` with MPS friendly defaults.
-  - Tokenize and group WikiText into fixed length causal language modeling blocks.
-  - Configure `Trainer` with small batches, gradient accumulation, short sequence length, step based evaluation, and checkpointing.
-  - Run a generation demo from a prompt before or after fine-tuning.
+  - **Part A — Tiny decoder-only Transformer in pure PyTorch:**
+    - Set up reproducible PyTorch training with CPU, MPS, or CUDA device detection.
+    - Build a tiny decoder-only Transformer in pure PyTorch to make the architecture concrete.
+    - Implement token embeddings, positional embeddings, stacked Transformer blocks, a causal self-attention mask, and an LM head.
+    - Train the tiny model on a self-contained character-level text snippet with next-token prediction loss.
+  - **Part B — Fine-tuning a pretrained GPT model (Hugging Face):**
+    - Move to Hugging Face `transformers` and fine-tune `distilgpt2` with MPS friendly defaults.
+    - Tokenize and group WikiText into fixed length causal language modeling blocks.
+    - Configure `Trainer` with small batches, gradient accumulation, short sequence length, step based evaluation, and checkpointing.
+    - Set `dataloader_pin_memory=False` for memory optimization and `model.config.loss_type = "ForCausalLM"`.
+    - Run a generation demo from a prompt before or after fine-tuning.
 - **Key Concepts:**
   - Decoder-only Transformer architecture.
   - Causal self-attention and future-token masking.
@@ -182,11 +185,9 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
   - Language modeling heads and logits over vocabulary.
   - Transfer learning for generation with pretrained GPT models.
 - **Datasets:**
-  - **Scratch Demo:** Small character-level text snippet.
-  - **Fine-tuning Demo:** **WikiText-2** for causal language modeling.
   - **Anchor:** **WikiText-2** for causal language modeling.
   - **Demo:** Small character-level text snippet (Scratch Demo).
-- **Data Source:** In-notebook toy text, `datasets.load_dataset("Salesforce/wikitext", "wikitext-2-v1")`.
+- **Data Source:** In-notebook toy text, `datasets.load_dataset("Salesforce/Salesforce/wikitext", "wikitext-2-v1")`.
 - **Tech Stack:** `PyTorch`, Hugging Face `datasets`, Hugging Face `transformers`.
 
 #### **Week 9: Encoder-Decoder Generation (T5)**
