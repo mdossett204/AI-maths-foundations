@@ -193,19 +193,22 @@ Welcome to this comprehensive 9-week course designed to guide you from the funda
 #### **Week 9: Encoder-Decoder Generation (T5)**
 
 - **Notebook:** `week9-t5/Week_9_T5.ipynb`
-- **Goal:** Learn seq2seq generation through T5's text-to-text framing and fine-tune a small model for English-to-German translation.
+- **Goal:** Learn seq2seq generation through T5's text-to-text framing and fine-tune a small model for German-to-English translation.
 - **Study Plan:**
-  - Set up reproducible training with the same CPU, MPS, or CUDA device pattern.
-  - Compare GPT-style decoder-only generation with T5-style encoder-decoder generation.
-  - Build a tiny T5-style encoder-decoder Transformer in pure PyTorch to make the architecture concrete.
-  - Review how the T5 encoder reads the full source sequence with bidirectional self-attention.
-  - Review how the T5 decoder uses causal self-attention plus cross-attention into encoder states.
-  - Train the tiny model on a synthetic reverse-sequence task using shifted-right decoder inputs and teacher forcing.
-  - Frame translation as text-to-text generation with the prefix `translate German to English:`.
-  - Load `opus_books` German-English examples and create small CPU-friendly train and validation slices.
-  - Tokenize source and target text with capped source and target lengths.
-  - Fine-tune `t5-small` with `DataCollatorForSeq2Seq`, `Trainer`, gradient accumulation, step-based evaluation, and checkpointing.
-  - Run a beam-search translation demo before or after fine-tuning.
+  - **Part A — Architecture Differences (GPT vs. T5):**
+    - Compare GPT-style decoder-only generation with T5-style encoder-decoder generation.
+    - Review how the T5 encoder reads the full source sequence with bidirectional self-attention.
+    - Review how the T5 decoder uses causal self-attention plus cross-attention into encoder states.
+  - **Part B — Tiny T5 Encoder-Decoder in pure PyTorch:**
+    - Set up reproducible training with the same CPU, MPS, or CUDA device pattern.
+    - Build a tiny T5-style encoder-decoder Transformer in pure PyTorch to make the architecture concrete.
+    - Train the tiny model on a synthetic reverse-sequence task using shifted-right decoder inputs and teacher forcing.
+  - **Part C — Fine-tuning a pretrained T5 model (Hugging Face):**
+    - Frame translation as text-to-text generation with the prefix `translate German to English:`.
+    - Load `opus_books` German-English examples and create small CPU-friendly train and validation slices.
+    - Tokenize source and target text with capped source and target lengths.
+    - Fine-tune `t5-small` with `DataCollatorForSeq2Seq`, `Trainer`, gradient accumulation, step-based evaluation, and checkpointing.
+    - Run a beam-search translation demo to evaluate generated English output.
 - **Key Concepts:**
   - Encoder-decoder Transformer architecture.
   - Text-to-text transfer learning.
