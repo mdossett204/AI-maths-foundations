@@ -1,5 +1,5 @@
 torch
 transformers
 datasets
-numpy
 accelerate
+jupyter

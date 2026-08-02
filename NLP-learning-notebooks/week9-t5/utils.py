@@ -397,9 +397,13 @@ class TinyT5(nn.Module):
             q_idx = torch.arange(seq, device=tgt_ids.device).unsqueeze(1)
             k_idx = torch.arange(seq + offset, device=tgt_ids.device).unsqueeze(0)
             causal_mask = k_idx <= (q_idx + offset)
+            # Pad mask for the cached tokens (assuming past tokens are valid)
+            past_mask = torch.ones(batch, 1, 1, offset, dtype=torch.bool, device=tgt_ids.device)
+            full_pad_mask = torch.cat([past_mask, pad_mask], dim=-1)
+            return full_pad_mask & causal_mask.view(1, 1, seq, seq + offset)
         else:
             causal_mask = torch.tril(torch.ones(seq, seq, device=tgt_ids.device, dtype=torch.bool))
-        return pad_mask & causal_mask.view(1, 1, seq, seq + offset)
+            return pad_mask & causal_mask.view(1, 1, seq, seq)
     
     def shift_right(self, labels):
         bos = torch.full((labels.size(0), 1), self.bos_id, device=labels.device, dtype=labels.dtype)
@@ -515,14 +519,17 @@ def train_tiny_T5(
         loss.backward()
         optimizer.step()
 
+        is_best = False
         if loss.item() < lowest_loss:
             best_model_state = deepcopy(model.state_dict())
             lowest_loss = loss.item()
+            is_best = True
             if save_model_path is not None:
                 torch.save(best_model_state, save_model_path)
-                print(f"Saved best model state to {save_model_path}")
         if epoch % 50 == 0:
             print(f"epoch {epoch+1} | loss {loss.item():.4f}")
+            if is_best and save_model_path is not None:
+                print(f"Saved best model state to {save_model_path}")
             
     model.load_state_dict(best_model_state)
     return model
